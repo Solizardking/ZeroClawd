@@ -16,6 +16,29 @@ and the Go runtime catalog.
 | `pkg/catalog/catalog.go` | Go runtime loader for local skill, agent, and ZK catalog surfaces |
 | `cmd/clawdbot/main.go` | `clawdbot catalog zk` display command |
 
+## Repository Coverage Map
+
+| Path | Included Surface |
+|---|---|
+| `.gitattributes` | Text normalization and generated artifact classification |
+| `AGENTS.md` | Agent catalog, public surfaces, local catalog roots |
+| `CLAWD.md` | Spawn context, deployment targets, ZK/Cloudflare public surfaces |
+| `backend` | Legacy/backend marker retained by the runtime tree |
+| `cmd/` | CLI entrypoints, including `clawdbot catalog zk` |
+| `dist/` | Generated output boundary; treated as generated when present |
+| `docs/` | Release, TEE, Zero, PiedPiper, and Cloudflare/ZK integration docs |
+| `ooda/` | TypeScript OODA harness and journal loop |
+| `pkg/` | Go runtime packages, catalog loader, doctor checks, trading/runtime logic |
+| `scripts/` | Install/bootstrap support services |
+| `web/` | Go-backed web console |
+| `ui/` | Vite/React UI and ClawdBrowser assets |
+| `zk-primitives/agent` | ZK agent wrapper and skill surface |
+| `zk-primitives/client` | TypeScript SDK |
+| `zk-primitives/configs` | Light tree and Cloudflare metadata examples |
+| `zk-primitives/docs` | Architecture, integration, and edge-distribution docs |
+| `zk-primitives/programs` | Anchor program surface |
+| `zk-primitives/tests` | Off-chain, edge metadata, and on-chain test notes |
+
 ## Public Routes
 
 | Route | Output |
