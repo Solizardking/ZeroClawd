@@ -7,6 +7,14 @@
   "description": "Nullifiers, Groth16 proof preparation, and Light Protocol compressed-state helpers for Solana-native Clawd and ZK Shark agents.",
   "integratedFrom": "/Users/8bit/zk-router/zk-primitives",
   "packageManager": "pnpm",
+  "docs": {
+    "readme": "README.md",
+    "reference": "zk.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "integration": "docs/INTEGRATION.md",
+    "edgeDistribution": "docs/EDGE_DISTRIBUTION.md",
+    "piedpiperAdaptation": "docs/PIEDPIPER_ADAPTATION.md"
+  },
   "roots": {
     "agent": "agent",
     "client": "client",
@@ -41,6 +49,27 @@
     "verify_proof",
     "compute_nullifier"
   ],
+  "distribution": {
+    "cloudflareWorker": "../cloudflare/install-worker.js",
+    "wranglerConfig": "../wrangler.toml",
+    "metadataEndpoints": [
+      "/.well-known/clawdbot-install.json",
+      "/.well-known/clawdbot-zk.json",
+      "/.well-known/zk-primitives.json",
+      "/zk",
+      "/zk.json",
+      "/metadata.json",
+      "/catalog",
+      "/routes"
+    ],
+    "publicInstallHosts": [
+      "https://install.onchainai.fund",
+      "https://install.x402.wtf",
+      "https://x402.wtf/clawdbot",
+      "https://zk.x402.wtf/clawdbot"
+    ],
+    "configExample": "configs/cloudflare-worker.example.json"
+  },
   "environment": {
     "requiredForOnchainActions": ["CLAWD_ZK_RPC_URL"],
     "optional": [

@@ -30,6 +30,8 @@ model stack relies on:
 
 The architecture is documented in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 The reasoning, cost analysis, and security model are all there.
+The edge install and metadata handoff is documented in
+[`docs/EDGE_DISTRIBUTION.md`](./docs/EDGE_DISTRIBUTION.md).
 
 ## Repo layout
 
@@ -37,7 +39,9 @@ The reasoning, cost analysis, and security model are all there.
 zk-primitives/
 ├── README.md                                ← you are here
 ├── docs/
-│   └── ARCHITECTURE.md                      ← deep dive: design, costs, security
+│   ├── ARCHITECTURE.md                      ← deep dive: design, costs, security
+│   ├── INTEGRATION.md                       ← runtime catalog and trust gates
+│   └── EDGE_DISTRIBUTION.md                 ← Cloudflare metadata surface
 ├── programs/
 │   └── clawd-zk/                           ← Anchor program
 │       ├── Cargo.toml
@@ -165,6 +169,21 @@ footprint:
 This is the missing layer between "we trained a model" and "we
 have provable, on-chain, sovereign identity for that model."
 
+## Cloudflare edge metadata
+
+The installer Worker in [`../cloudflare/`](../cloudflare/) advertises this ZK
+surface through read-only JSON endpoints:
+
+```bash
+curl -fsSL https://install.onchainai.fund/.well-known/clawdbot-zk.json
+curl -fsSL https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json
+```
+
+Those endpoints expose package names, operation names, docs, and trust gates.
+They do not execute proofs or submit transactions. Installed runtimes continue
+to discover local source through `CLAWDBOT_ZK_PRIMITIVES_DIR` and
+`clawdbot catalog zk`.
+
 ## Status
 
 **Scaffold**: All modules compile-check, all tests are written and
@@ -231,6 +250,8 @@ Original repository: `https://github.com/vs666/MinMax`
 ## See also
 
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — the deep dive
+- [`docs/INTEGRATION.md`](./docs/INTEGRATION.md) — runtime catalog integration
+- [`docs/EDGE_DISTRIBUTION.md`](./docs/EDGE_DISTRIBUTION.md) — Cloudflare install and metadata surface
 - [`docs/PIEDPIPER_ADAPTATION.md`](./docs/PIEDPIPER_ADAPTATION.md) — classical→ZK algorithm map
 - [`../ai-training/README.md`](../ai-training/README.md) — the model
   training pipeline that produces the weights this primitive attests to

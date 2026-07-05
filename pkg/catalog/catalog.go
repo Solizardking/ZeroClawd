@@ -61,22 +61,30 @@ type AgentEntry struct {
 }
 
 type ZKSurface struct {
-	Root             string   `json:"root"`
-	ManifestFile     string   `json:"manifestFile,omitempty"`
-	WorkspaceFile    string   `json:"workspaceFile,omitempty"`
-	LockFile         string   `json:"lockFile,omitempty"`
-	SkillFile        string   `json:"skillFile,omitempty"`
-	AgentManifest    string   `json:"agentManifest,omitempty"`
-	AgentPackageDir  string   `json:"agentPackageDir,omitempty"`
-	AgentPackageName string   `json:"agentPackageName,omitempty"`
-	AgentBinary      string   `json:"agentBinary,omitempty"`
-	ClientPackageDir string   `json:"clientPackageDir,omitempty"`
-	ClientPackage    string   `json:"clientPackage,omitempty"`
-	ProgramDir       string   `json:"programDir,omitempty"`
-	ProgramName      string   `json:"programName,omitempty"`
-	ConfigFile       string   `json:"configFile,omitempty"`
-	Docs             []string `json:"docs,omitempty"`
-	Operations       []string `json:"operations"`
+	Root             string            `json:"root"`
+	ManifestFile     string            `json:"manifestFile,omitempty"`
+	ManifestName     string            `json:"manifestName,omitempty"`
+	ManifestSlug     string            `json:"manifestSlug,omitempty"`
+	Status           string            `json:"status,omitempty"`
+	Description      string            `json:"description,omitempty"`
+	PackageManager   string            `json:"packageManager,omitempty"`
+	WorkspaceFile    string            `json:"workspaceFile,omitempty"`
+	LockFile         string            `json:"lockFile,omitempty"`
+	SkillFile        string            `json:"skillFile,omitempty"`
+	AgentManifest    string            `json:"agentManifest,omitempty"`
+	AgentPackageDir  string            `json:"agentPackageDir,omitempty"`
+	AgentPackageName string            `json:"agentPackageName,omitempty"`
+	AgentBinary      string            `json:"agentBinary,omitempty"`
+	AgentAliases     []string          `json:"agentAliases,omitempty"`
+	ClientPackageDir string            `json:"clientPackageDir,omitempty"`
+	ClientPackage    string            `json:"clientPackage,omitempty"`
+	ProgramDir       string            `json:"programDir,omitempty"`
+	ProgramName      string            `json:"programName,omitempty"`
+	ProgramID        string            `json:"programId,omitempty"`
+	ConfigFile       string            `json:"configFile,omitempty"`
+	Docs             []string          `json:"docs,omitempty"`
+	Operations       []string          `json:"operations"`
+	TrustGate        map[string]string `json:"trustGate,omitempty"`
 }
 
 func DefaultRoots() Roots {
@@ -202,6 +210,21 @@ func LoadZKSurface(root string) (ZKSurface, error) {
 	manifestFile := filepath.Join(root, "MANIFEST.json")
 	if fileExists(manifestFile) {
 		surface.ManifestFile = manifestFile
+		manifest, err := readZKManifest(manifestFile)
+		if err != nil {
+			return ZKSurface{}, err
+		}
+		surface.ManifestName = manifest.Name
+		surface.ManifestSlug = manifest.Slug
+		surface.Status = manifest.Status
+		surface.Description = manifest.Description
+		surface.PackageManager = manifest.PackageManager
+		surface.ProgramID = manifest.Packages.Program.ProgramID
+		surface.AgentAliases = manifest.Packages.Agent.BinaryAliases
+		if len(manifest.Operations) > 0 {
+			surface.Operations = manifest.Operations
+		}
+		surface.TrustGate = manifest.TrustGate
 	}
 	workspaceFile := filepath.Join(root, "pnpm-workspace.yaml")
 	if fileExists(workspaceFile) {
@@ -252,7 +275,19 @@ func LoadZKSurface(root string) (ZKSurface, error) {
 	if fileExists(configFile) {
 		surface.ConfigFile = configFile
 	}
-	for _, doc := range []string{"README.md", "zk.md", filepath.Join("docs", "ARCHITECTURE.md")} {
+	for _, doc := range []string{
+		"README.md",
+		"zk.md",
+		filepath.Join("agent", "README.md"),
+		filepath.Join("client", "README.md"),
+		filepath.Join("configs", "README.md"),
+		filepath.Join("programs", "README.md"),
+		filepath.Join("tests", "README.md"),
+		filepath.Join("docs", "ARCHITECTURE.md"),
+		filepath.Join("docs", "INTEGRATION.md"),
+		filepath.Join("docs", "EDGE_DISTRIBUTION.md"),
+		filepath.Join("docs", "PIEDPIPER_ADAPTATION.md"),
+	} {
 		path := filepath.Join(root, doc)
 		if fileExists(path) {
 			surface.Docs = append(surface.Docs, path)
@@ -419,6 +454,24 @@ type packageJSON struct {
 	Bin  map[string]any `json:"bin"`
 }
 
+type zkManifest struct {
+	Name           string            `json:"name"`
+	Slug           string            `json:"slug"`
+	Status         string            `json:"status"`
+	Description    string            `json:"description"`
+	PackageManager string            `json:"packageManager"`
+	Operations     []string          `json:"operations"`
+	TrustGate      map[string]string `json:"trustGate"`
+	Packages       struct {
+		Agent struct {
+			BinaryAliases []string `json:"binaryAliases"`
+		} `json:"agent"`
+		Program struct {
+			ProgramID string `json:"programId"`
+		} `json:"program"`
+	} `json:"packages"`
+}
+
 func readPackageJSON(path string) (packageJSON, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -429,6 +482,18 @@ func readPackageJSON(path string) (packageJSON, error) {
 		return packageJSON{}, fmt.Errorf("parse %s: %w", path, err)
 	}
 	return pkg, nil
+}
+
+func readZKManifest(path string) (zkManifest, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return zkManifest{}, err
+	}
+	var manifest zkManifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return zkManifest{}, fmt.Errorf("parse %s: %w", path, err)
+	}
+	return manifest, nil
 }
 
 func readCargoName(path string) string {

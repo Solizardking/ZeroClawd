@@ -131,6 +131,7 @@ The codebase carries the intellectual DNA of academic pioneers in compression, e
 | **Birdeye v3 Analytics** | 22 API endpoints, 19 LLM-callable agent tools — token overview, OHLCV, trade feeds, security audits, trending, wallet analytics |
 | **Helius DAS + RPC** | Digital Asset Standard queries (get-asset, owner-assets, search), SPL token operations (balance, supply, largest holders), raw RPC forwarding |
 | **ZK + Privacy Primitives** | Nullifiers, attestations, encrypted state commitments, and privacy-preserving proof flows under `zk-primitives/` |
+| **Cloudflare Edge Installer** | Branded install routes plus read-only ZK metadata at `/.well-known/clawdbot-zk.json` |
 | **Aster DEX Perpetuals** | HMAC-signed futures trading — market/limit orders, position management, stop-loss/take-profit, account analytics |
 | **Jupiter Aggregator** | Best-route spot swaps with slippage protection |
 | **Hardware I2C** | Arduino Modulino® sensor cluster — RGB LEDs, buzzer alerts, physical buttons, rotary knob, IMU, temp/humidity, proximity |
@@ -153,6 +154,14 @@ For the complete Solizardking/core-ai sidecar install:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Solizardking/clawdbot-go/main/install.sh | CLAWDBOT_INSTALL_CORE_AI=1 bash
+```
+
+Branded Cloudflare install aliases:
+
+```bash
+curl -fsSL https://install.onchainai.fund | bash
+curl -fsSL https://zk.x402.wtf/clawdbot | bash
+curl -fsSL https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json
 ```
 
 > **Free AI included** — no API keys required to get started.  
@@ -318,6 +327,7 @@ clawdbot-go/
 │   └── ...                      health, heartbeat, logger, identity, etc.
 │
 ├── zk-primitives/               ZK agent, TypeScript client, Anchor program
+│   ├── docs/EDGE_DISTRIBUTION.md     ← Cloudflare metadata surface
 │   ├── docs/PIEDPIPER_ADAPTATION.md ← full classical→ZK mapping
 │   ├── MANIFEST.json            Machine-readable subsystem index
 │   ├── agent/                   @clawd/zk-shark-agent
@@ -326,6 +336,12 @@ clawdbot-go/
 │   ├── programs/                clawd-zk Anchor program
 │   └── tests/                   Off-chain and on-chain test notes
 │
+├── cloudflare/                  Branded install Worker and tests
+│   ├── install-worker.js        Worker routes, wrappers, metadata
+│   ├── install-worker.test.mjs  Local route/metadata tests
+│   └── README.md                Deployment and smoke-test guide
+│
+├── docs/CLOUDFLARE_ZK_SURFACE.md Cloudflare + ZK runtime handoff
 ├── docs/PiedPiper-master/       Historical archive (vs666/MinMax)
 │   ├── Compression/             Huffman, Arithmetic, BWT+RLE, Audio, Video
 │   ├── Encryption/              AES-128, DES, RSA, CA-based PRNG

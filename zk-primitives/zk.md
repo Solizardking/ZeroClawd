@@ -370,6 +370,21 @@ cargo test-sbf -p clawd-zk
 
 ---
 
+## Edge Metadata
+
+The Cloudflare installer Worker exposes this primitive layer as read-only JSON:
+
+```bash
+curl -fsSL https://install.onchainai.fund/.well-known/clawdbot-zk.json
+curl -fsSL https://zk.x402.wtf/clawdbot/zk.json
+```
+
+The metadata mirrors `MANIFEST.json`, package names, operation names, and trust
+gates. It is safe for docs pages and CLIs to fetch because it does not carry
+proofs, signer material, or transaction submission authority.
+
+---
+
 ## Security Assumptions
 
 1. **SHA-256 nullifier** is collision-resistant for the client-to-circuit domain.
@@ -420,9 +435,12 @@ zk-primitives/
 ├── README.md                      — overview + quick start
 ├── docs/
 │   ├── ARCHITECTURE.md            — deep dive: security, costs, alternatives
+│   ├── INTEGRATION.md             — runtime catalog and package boundaries
+│   ├── EDGE_DISTRIBUTION.md       — Cloudflare metadata surface
 │   └── PIEDPIPER_ADAPTATION.md    — full classical→ZK algorithm map
 ├── configs/
-│   └── light-trees.yaml           — canonical V2 tree addresses (pinned)
+│   ├── light-trees.yaml           — canonical V2 tree addresses (pinned)
+│   └── cloudflare-worker.example.json
 ├── programs/
 │   └── clawd-zk/src/
 │       ├── lib.rs                 — instruction dispatch

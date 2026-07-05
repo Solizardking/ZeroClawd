@@ -6,6 +6,8 @@ read by three surfaces:
 - The Go runtime catalog command: `clawdbot catalog zk`
 - The local skill library through `zk-primitives/agent/SKILL.md`
 - The local agent catalog through Clawd agents that call `@clawd/zk-agent`
+- The Cloudflare installer metadata endpoint:
+  `/.well-known/clawdbot-zk.json`
 
 ## Local Catalog Roots
 
@@ -29,6 +31,21 @@ clawdbot catalog --json
 
 The catalog command is read-only. It does not install packages, execute skills,
 sign transactions, or send Solana instructions.
+
+## Edge Discovery
+
+The Cloudflare Worker in `cloudflare/install-worker.js` publishes a read-only
+view of this directory for install pages, CLIs, and dashboards:
+
+```bash
+curl -fsSL https://install.onchainai.fund/.well-known/clawdbot-zk.json
+curl -fsSL https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json
+```
+
+The endpoint mirrors the local manifest shape: package names, operation names,
+docs, accepted environment variables, and trust gates. Treat it as discovery
+data only. A caller that wants to build or submit an instruction must still load
+the local package and pass the runtime trust gate.
 
 ## Runtime Shape
 
@@ -77,3 +94,5 @@ The catalog can show that ZK capability exists; it should not silently arm it.
 4. Run `npm test` for the TypeScript packages.
 5. Run `cargo test-sbf -p clawd-zk` with a Light-compatible validator.
 6. Publish the final `MANIFEST.json` alongside package versions and deployment IDs.
+7. Run `node --test cloudflare/install-worker.test.mjs`.
+8. Verify the deployed Worker metadata endpoint before announcing install URLs.

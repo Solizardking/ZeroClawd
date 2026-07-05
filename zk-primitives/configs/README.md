@@ -8,6 +8,7 @@ Configuration files for Clawd ZK network and tree metadata.
 |---|---|
 | `light-trees.yaml` | Canonical Light Protocol tree, queue, CPI context, and lookup-table addresses |
 | `clawdbot-zk.example.json` | Runtime-facing example config for catalog and agent wiring |
+| `cloudflare-worker.example.json` | Worker-facing metadata vars and trust-gate defaults for edge distribution |
 
 ## Operational Rules
 
@@ -27,3 +28,7 @@ CLAWD_ZK_COMMITMENT=confirmed
 CLAWD_ZK_KEYPAIR=
 CLAWD_ZK_NETWORK=mainnet
 ```
+
+Cloudflare metadata vars are non-secret deployment descriptors. Keep them in
+`wrangler.toml` or a generated environment, not in shell files that also hold
+operator keys.

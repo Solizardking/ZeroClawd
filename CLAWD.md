@@ -58,6 +58,7 @@ Clawd operates exclusively on Solana mainnet:
 - **Imperial Trading API** for advanced order types and portfolio management
 - **Phantom Wallet MCP** for wallet operations across Solana, Ethereum, Bitcoin, and Sui
 - **ZK primitives** for attestations, encrypted state commitments, nullifiers, and privacy-preserving proof flows
+- **Cloudflare edge installer metadata** for read-only discovery of install routes and the bundled `zk-primitives/` surface
 
 ## PiedPiper Heritage
 
@@ -133,6 +134,7 @@ Clawd agents deploy to:
 - **Fly.io** — containerized agent deployment with global anycast
 - **Railway** — zero-config agent hosting
 - **Upstash Boxes** — isolated compute sandboxes with persistent state and box-local Solana wallets
+- **Cloudflare Workers** — branded installer, route metadata, and ZK primitive discovery
 - **Cloudflare Tunnel** — secure tunneling for local agent development
 
 ## Public Surfaces
@@ -140,6 +142,7 @@ Clawd agents deploy to:
 - **Runtime repo** — `https://github.com/Solizardking/clawdbot-go`
 - **Ecosystem hub** — `https://github.com/solizardking/solana-clawd`
 - **x402 gateway** — `https://zk.x402.wtf`
+- **Installer metadata** — `https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json`
 - **Terminal surface** — `https://cheshireterminal.ai`
 
 ## Reference Model Surface

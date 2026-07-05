@@ -81,12 +81,25 @@ func TestLoadZKSurface(t *testing.T) {
 	writeFile(t, filepath.Join(root, "agent", "agent.json"), `{"identifier":"clawd-zk-agent"}`)
 	writeFile(t, filepath.Join(root, "agent", "package.json"), `{"name":"@clawd/zk-agent","bin":{"clawd-zk-agent":"./dist/cli.js"}}`)
 	writeFile(t, filepath.Join(root, "client", "package.json"), `{"name":"@clawd/zk-client"}`)
-	writeFile(t, filepath.Join(root, "MANIFEST.json"), `{"name":"Clawd ZK Primitives"}`)
+	writeFile(t, filepath.Join(root, "MANIFEST.json"), `{
+  "name":"Clawd ZK Primitives",
+  "slug":"clawd-zk-primitives",
+  "status":"scaffold-production-facing",
+  "description":"ZK surface for tests",
+  "packageManager":"pnpm",
+  "packages":{
+    "agent":{"binaryAliases":["shark-of-all-streets","clawd-zk-agent"]},
+    "program":{"programId":"CLAWDzk11111111111111111111111111111111111"}
+  },
+  "operations":["publish_attestation","verify_proof"],
+  "trustGate":{"default":"observer","signAndSendTransaction":"delegated"}
+}`)
 	writeFile(t, filepath.Join(root, "pnpm-workspace.yaml"), "packages:\n  - agent\n  - client\n")
 	writeFile(t, filepath.Join(root, "programs", "clawd-zk", "Cargo.toml"), "[package]\nname = \"clawd-zk\"\n")
 	writeFile(t, filepath.Join(root, "configs", "light-trees.yaml"), "trees: []\n")
 	writeFile(t, filepath.Join(root, "README.md"), "# ZK\n")
 	writeFile(t, filepath.Join(root, "docs", "ARCHITECTURE.md"), "# Architecture\n")
+	writeFile(t, filepath.Join(root, "docs", "INTEGRATION.md"), "# Integration\n")
 
 	surface, err := LoadZKSurface(root)
 	if err != nil {
@@ -98,11 +111,23 @@ func TestLoadZKSurface(t *testing.T) {
 	if surface.ClientPackage != "@clawd/zk-client" || surface.ProgramName != "clawd-zk" {
 		t.Fatalf("unexpected zk package metadata: %#v", surface)
 	}
+	if surface.Status != "scaffold-production-facing" || surface.PackageManager != "pnpm" {
+		t.Fatalf("unexpected manifest metadata: %#v", surface)
+	}
+	if surface.ProgramID != "CLAWDzk11111111111111111111111111111111111" {
+		t.Fatalf("unexpected program id: %#v", surface)
+	}
+	if len(surface.AgentAliases) != 2 || surface.AgentAliases[0] != "shark-of-all-streets" {
+		t.Fatalf("unexpected agent aliases: %#v", surface)
+	}
 	if surface.ManifestFile == "" || surface.AgentManifest == "" || surface.WorkspaceFile == "" {
 		t.Fatalf("expected manifest/workspace metadata: %#v", surface)
 	}
-	if len(surface.Operations) == 0 || len(surface.Docs) != 2 {
+	if len(surface.Operations) != 2 || len(surface.Docs) != 3 {
 		t.Fatalf("unexpected zk docs/ops: %#v", surface)
+	}
+	if surface.TrustGate["default"] != "observer" {
+		t.Fatalf("unexpected trust gate: %#v", surface)
 	}
 }
 

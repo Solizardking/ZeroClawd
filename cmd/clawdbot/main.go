@@ -799,14 +799,27 @@ trading endpoints.`,
 			fmt.Printf("%sClawd ZK Primitives%s\n", colorGreen, colorReset)
 			fmt.Printf("  Root:       %s\n", zk.Root)
 			fmt.Printf("  Skill:      %s\n", zk.SkillFile)
-			fmt.Printf("  Manifest:   %s\n", zk.AgentManifest)
+			fmt.Printf("  Manifest:   %s\n", zk.ManifestFile)
+			if zk.Status != "" {
+				fmt.Printf("  Status:     %s\n", zk.Status)
+			}
+			if zk.PackageManager != "" {
+				fmt.Printf("  Packages:   %s workspace\n", zk.PackageManager)
+			}
 			fmt.Printf("  Agent:      %s", zk.AgentPackageName)
 			if zk.AgentBinary != "" {
 				fmt.Printf(" (%s)", zk.AgentBinary)
 			}
+			if len(zk.AgentAliases) > 0 {
+				fmt.Printf(" aliases=%s", strings.Join(zk.AgentAliases, ","))
+			}
 			fmt.Println()
 			fmt.Printf("  Client:     %s\n", zk.ClientPackage)
-			fmt.Printf("  Program:    %s\n", zk.ProgramName)
+			fmt.Printf("  Program:    %s", zk.ProgramName)
+			if zk.ProgramID != "" {
+				fmt.Printf(" (%s)", zk.ProgramID)
+			}
+			fmt.Println()
 			fmt.Printf("  Config:     %s\n", zk.ConfigFile)
 			fmt.Printf("  Operations: %s\n", strings.Join(zk.Operations, ", "))
 			if len(zk.Docs) > 0 {

@@ -7,12 +7,14 @@ Public surfaces for the current ecosystem:
 - **Runtime repo** — `https://github.com/Solizardking/clawdbot-go`
 - **Ecosystem hub** — `https://github.com/solizardking/solana-clawd`
 - **x402 gateway** — `https://zk.x402.wtf`
+- **Installer metadata** — `https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json`
 - **Terminal** — `https://cheshireterminal.ai`
 
 Local runtime catalog roots:
 - **Skills** — `/Users/8bit/skills/skills` (`CLAWDBOT_SKILLS_DIR`)
 - **Agents** — `/Users/8bit/agents/agents/src` (`CLAWDBOT_AGENTS_DIR`)
 - **ZK primitives** — `./zk-primitives` (`CLAWDBOT_ZK_PRIMITIVES_DIR`)
+- **Cloudflare installer Worker** — `./cloudflare/install-worker.js`
 
 Inspect the integrated local view with:
 
@@ -22,6 +24,14 @@ clawdbot catalog skills
 clawdbot catalog agents
 clawdbot catalog zk
 clawdbot catalog compress --dry-run
+```
+
+Cloudflare edge install and ZK metadata surfaces:
+
+```bash
+curl -fsSL https://install.onchainai.fund | bash
+curl -fsSL https://zk.x402.wtf/clawdbot | bash
+curl -fsSL https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json
 ```
 
 ---
