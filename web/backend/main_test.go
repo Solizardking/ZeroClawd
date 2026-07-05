@@ -2,6 +2,10 @@ package main
 
 import (
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/8bitlabs/clawdbot/pkg/config"
@@ -58,6 +62,98 @@ func TestRedactedConfigMasksSecrets(t *testing.T) {
 	}
 }
 
+func TestVaultStatusDoesNotExposeValues(t *testing.T) {
+	root := t.TempDir()
+	writeWebTestFile(t, filepath.Join(root, ".env.local"), `
+CLAWDBOT_VAULT_ENABLED=1
+CLAWDBOT_VAULT_ALLOWED_IPS=127.0.0.1
+CLAWDBOT_VAULT_TOKEN=vault-token
+HELIUS_API_KEY=helius-secret
+`)
+	req := httptest.NewRequest(http.MethodGet, "/api/vault/status", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	rec := httptest.NewRecorder()
+
+	vaultStatusHandler(root).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status code = %d, body=%s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "helius-secret") || strings.Contains(body, "vault-token") {
+		t.Fatalf("status leaked secret values: %s", body)
+	}
+	if !strings.Contains(body, `"keys":1`) || !strings.Contains(body, `"clientIpAllowed":true`) {
+		t.Fatalf("status missing expected metadata: %s", body)
+	}
+}
+
+func TestVaultKeyRequiresAllowedIPAndBearer(t *testing.T) {
+	root := t.TempDir()
+	writeWebTestFile(t, filepath.Join(root, ".env.local"), `
+CLAWDBOT_VAULT_ENABLED=1
+CLAWDBOT_VAULT_ALLOWED_IPS=203.0.113.7
+CLAWDBOT_VAULT_TOKEN=vault-token
+HELIUS_API_KEY=helius-secret
+`)
+
+	noToken := httptest.NewRequest(http.MethodGet, "/api/vault/key?name=HELIUS_API_KEY", nil)
+	noToken.RemoteAddr = "203.0.113.7:1234"
+	rec := httptest.NewRecorder()
+	vaultKeyHandler(root).ServeHTTP(rec, noToken)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("missing token code = %d", rec.Code)
+	}
+
+	deniedIP := httptest.NewRequest(http.MethodGet, "/api/vault/key?name=HELIUS_API_KEY", nil)
+	deniedIP.RemoteAddr = "198.51.100.9:1234"
+	deniedIP.Header.Set("Authorization", "Bearer vault-token")
+	rec = httptest.NewRecorder()
+	vaultKeyHandler(root).ServeHTTP(rec, deniedIP)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("denied IP code = %d", rec.Code)
+	}
+
+	allowed := httptest.NewRequest(http.MethodGet, "/api/vault/key?name=HELIUS_API_KEY", nil)
+	allowed.RemoteAddr = "203.0.113.7:1234"
+	allowed.Header.Set("Authorization", "Bearer vault-token")
+	rec = httptest.NewRecorder()
+	vaultKeyHandler(root).ServeHTTP(rec, allowed)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("allowed code = %d, body=%s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "helius-secret") {
+		t.Fatalf("expected secret value in authorized response: %s", rec.Body.String())
+	}
+}
+
+func TestVaultExportExcludesControlKeys(t *testing.T) {
+	root := t.TempDir()
+	writeWebTestFile(t, filepath.Join(root, ".env.local"), `
+CLAWDBOT_VAULT_ENABLED=1
+CLAWDBOT_VAULT_ALLOWED_IPS=127.0.0.1
+CLAWDBOT_VAULT_TOKEN=vault-token
+HELIUS_API_KEY=helius-secret
+`)
+	req := httptest.NewRequest(http.MethodGet, "/api/vault/export", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	req.Header.Set("Authorization", "Bearer vault-token")
+	rec := httptest.NewRecorder()
+
+	vaultExportHandler(root).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status code = %d, body=%s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "export HELIUS_API_KEY='helius-secret'") {
+		t.Fatalf("export missing key: %s", body)
+	}
+	if strings.Contains(body, "CLAWDBOT_VAULT_TOKEN") {
+		t.Fatalf("export leaked control key: %s", body)
+	}
+}
+
 func TestStrategyParamsFromConfig(t *testing.T) {
 	cfg := config.DefaultConfig()
 	params := strategyParamsFromConfig(cfg)
@@ -68,6 +164,13 @@ func TestStrategyParamsFromConfig(t *testing.T) {
 	res := strategy.Backtest(demoBars(300), params, params.EMASlowPeriod+5)
 	if res.Trades != res.Wins+res.Losses {
 		t.Fatalf("backtest inconsistent: %d != %d + %d", res.Trades, res.Wins, res.Losses)
+	}
+}
+
+func writeWebTestFile(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
 	}
 }
 

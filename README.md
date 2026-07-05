@@ -599,6 +599,40 @@ go build -o build/clawdbot-web ./web/backend
 | `/api/config` | GET | Read-only configuration |
 | `/api/packages` | GET | All 45 Go packages with file counts |
 | `/api/env` | GET | Safe (non-secret) environment variables |
+| `/api/vault/status` | GET | Local `.env.local` vault metadata, no secret values |
+| `/api/vault/keys` | GET | Authorized key-name list from the local vault |
+| `/api/vault/key?name=HELIUS_API_KEY` | GET | Authorized single key lookup |
+| `/api/vault/export?names=HELIUS_API_KEY,BIRDEYE_API_KEY` | GET | Authorized shell export source |
+
+---
+
+### Local/Cloud Key Vault
+
+The web backend can expose `/Users/8bit/go-bot/.env.local` as a locked-down key
+source for another machine. Secret values are never returned unless the vault is
+enabled, the client IP is allowlisted, and the request includes the bearer token:
+
+```bash
+# in /Users/8bit/go-bot/.env.local
+CLAWDBOT_VAULT_ENABLED=1
+CLAWDBOT_VAULT_ALLOWED_IPS=127.0.0.1,203.0.113.7
+CLAWDBOT_VAULT_TOKEN=replace-with-a-long-random-token
+```
+
+Run the web API locally or with `-public` behind your own firewall:
+
+```bash
+go run ./web/backend -port 18800 -public
+curl http://HOST:18800/api/vault/status
+curl -H "Authorization: Bearer $CLAWDBOT_VAULT_TOKEN" \
+  "http://HOST:18800/api/vault/key?name=HELIUS_API_KEY"
+source <(curl -fsS -H "Authorization: Bearer $CLAWDBOT_VAULT_TOKEN" \
+  "http://HOST:18800/api/vault/export?names=HELIUS_API_KEY,BIRDEYE_API_KEY")
+```
+
+For deployments behind Cloudflare/Fly/reverse proxies, set
+`CLAWDBOT_TRUST_PROXY_HEADERS=1` only when the proxy is trusted; then the vault
+uses forwarded client-IP headers for the allowlist check.
 
 ---
 

@@ -36,6 +36,7 @@ import (
 	dnaPkg "github.com/8bitlabs/clawdbot/pkg/dna"
 	"github.com/8bitlabs/clawdbot/pkg/doctor"
 	"github.com/8bitlabs/clawdbot/pkg/gameoflife"
+	"github.com/8bitlabs/clawdbot/pkg/keyvault"
 	"github.com/8bitlabs/clawdbot/pkg/laws"
 	"github.com/8bitlabs/clawdbot/pkg/middleout"
 	"github.com/8bitlabs/clawdbot/pkg/solana"
@@ -490,6 +491,11 @@ func main() {
 		}
 		json.NewEncoder(w).Encode(env)
 	})
+
+	mux.HandleFunc("/api/vault/status", vaultStatusHandler(projectRoot))
+	mux.HandleFunc("/api/vault/keys", vaultKeysHandler(projectRoot))
+	mux.HandleFunc("/api/vault/key", vaultKeyHandler(projectRoot))
+	mux.HandleFunc("/api/vault/export", vaultExportHandler(projectRoot))
 
 	// Serve embedded frontend (or static files)
 	frontendDir := filepath.Join(filepath.Dir(absPath), "web", "frontend", "dist")
@@ -1097,6 +1103,138 @@ func bearerToken(r *http.Request) string {
 		return strings.TrimSpace(strings.TrimPrefix(auth, prefix))
 	}
 	return ""
+}
+
+func vaultStatusHandler(projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		vault, err := loadLocalVault(projectRoot)
+		if err != nil {
+			json.NewEncoder(w).Encode(map[string]any{
+				"enabled": false,
+				"error":   "vault source unavailable",
+			})
+			return
+		}
+		status := vault.Status()
+		json.NewEncoder(w).Encode(map[string]any{
+			"enabled":          status.Enabled,
+			"source":           status.Source,
+			"keys":             status.Keys,
+			"tokenConfigured":  status.TokenConfigured,
+			"allowedIps":       status.AllowedIPs,
+			"clientIp":         clientIP(r),
+			"clientIpAllowed":  vault.ClientAllowed(clientIP(r)),
+			"trustProxyHeader": webEnvBool("CLAWDBOT_TRUST_PROXY_HEADERS"),
+		})
+	}
+}
+
+func vaultKeysHandler(projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		vault, ok := authorizeVault(w, r, projectRoot)
+		if !ok {
+			return
+		}
+		keys := vault.Keys()
+		json.NewEncoder(w).Encode(map[string]any{
+			"source": vault.Path,
+			"count":  len(keys),
+			"keys":   keys,
+		})
+	}
+}
+
+func vaultKeyHandler(projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		vault, ok := authorizeVault(w, r, projectRoot)
+		if !ok {
+			return
+		}
+		name := strings.TrimSpace(r.URL.Query().Get("name"))
+		value, found := vault.Get(name)
+		if !found {
+			http.Error(w, "vault key not found", http.StatusNotFound)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{
+			"name":  name,
+			"value": value,
+		})
+	}
+}
+
+func vaultExportHandler(projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		vault, ok := authorizeVault(w, r, projectRoot)
+		if !ok {
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte(vault.Export(splitCSV(r.URL.Query().Get("names")))))
+	}
+}
+
+func authorizeVault(w http.ResponseWriter, r *http.Request, projectRoot string) (*keyvault.Vault, bool) {
+	vault, err := loadLocalVault(projectRoot)
+	if err != nil {
+		http.Error(w, "vault source unavailable", http.StatusServiceUnavailable)
+		return nil, false
+	}
+	if !vault.Enabled {
+		http.Error(w, "vault disabled", http.StatusForbidden)
+		return nil, false
+	}
+	remoteIP := clientIP(r)
+	if !vault.ClientAllowed(remoteIP) {
+		http.Error(w, "vault IP not allowed", http.StatusForbidden)
+		return nil, false
+	}
+	token := vault.Token()
+	if token == "" {
+		http.Error(w, "vault token not configured", http.StatusServiceUnavailable)
+		return nil, false
+	}
+	if !constantTimeEqual(bearerToken(r), token) {
+		w.Header().Set("WWW-Authenticate", `Bearer realm="clawdbot-vault"`)
+		http.Error(w, "vault bearer token required", http.StatusUnauthorized)
+		return nil, false
+	}
+	return vault, true
+}
+
+func loadLocalVault(projectRoot string) (*keyvault.Vault, error) {
+	path := strings.TrimSpace(os.Getenv(keyvault.EnvVaultFile))
+	if path == "" {
+		path = filepath.Join(projectRoot, ".env.local")
+	}
+	return keyvault.Load(path)
 }
 
 func firstNonEmptyEnv(key, fallback string) string {

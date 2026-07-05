@@ -1,0 +1,30 @@
+# Secrets: real env files stay local.
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+
+# Solana keypairs and private key material.
+wallet.json
+*-wallet.json
+keypair.json
+*-keypair.json
+*_keypair.json
+id.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+
+# Local generated dependencies and build outputs.
+node_modules/
+build/
+.cache/
+dist/
+*.tsbuildinfo
+
+# OS/editor noise.
+.DS_Store
