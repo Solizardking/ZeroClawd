@@ -345,7 +345,7 @@ clawdbot-go/
 ├── three-laws.md                Immutable on-chain laws (hash-attested)
 │
 ├── web/                         ── Web Console ──
-├── ooda/                        ── TypeScript OODA Engine ──
+├── ooda/                        ── TypeScript OODA paper/devnet harness + journal ──
 ├── scripts/                     ── Launcher, upstash boxes ──
 ├── Makefile                     Build targets (8 platforms + Docker)
 ├── Dockerfile                   Multi-stage production build
@@ -415,6 +415,10 @@ clawdbot ooda --interval 30             # Custom cycle interval (seconds)
 clawdbot ooda --sim                     # Force simulated mode (paper trading)
 clawdbot ooda --hw-bus 1                # Enable hardware I2C integration
 clawdbot ooda --no-hw                   # Explicitly disable hardware probing
+clawdbot ooda harness --ticks 50        # Run ooda/loop.ts through the Go CLI
+clawdbot ooda harness --tui             # Pipe the harness into ooda/tui.ts
+clawdbot ooda harness --plan            # Print the TypeScript launch plan
+clawdbot ooda journal --tail 20         # Tail ooda/journal/ticks.jsonl
 ```
 
 ### Ecosystem Catalog
@@ -528,6 +532,24 @@ The agent runs an autonomous **Observe → Orient → Decide → Act** cycle:
 │  HEARTBEAT (every 5m) ──► Health check ─► Hook dispatch         │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+### TypeScript Paper/Devnet Harness
+
+The `ooda/` directory is integrated into the main CLI as a local TypeScript
+harness for deterministic paper/devnet runs, LLM-routed decisions, JSONL
+journaling, and ANSI TUI monitoring:
+
+```bash
+npm --prefix ooda ci
+clawdbot ooda harness --ticks 50 --sleep 0
+clawdbot ooda harness --ticks 200 --sleep 0.4 --tui
+clawdbot ooda journal --tail 20 --json
+```
+
+The native `clawdbot ooda` command remains the long-running Go agent with
+Solana connectors, strategy hooks, and hardware controls. The harness command
+executes `ooda/loop.ts` from the same binary and writes every tick to
+`ooda/journal/ticks.jsonl`.
 
 ### Strategy Engine
 

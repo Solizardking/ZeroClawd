@@ -32,6 +32,7 @@ import (
 	"github.com/8bitlabs/clawdbot/pkg/doctor"
 	"github.com/8bitlabs/clawdbot/pkg/hardware"
 	"github.com/8bitlabs/clawdbot/pkg/laws"
+	oodaPkg "github.com/8bitlabs/clawdbot/pkg/ooda"
 	"github.com/8bitlabs/clawdbot/pkg/perfbench"
 	"github.com/8bitlabs/clawdbot/pkg/phoenix"
 	"github.com/8bitlabs/clawdbot/pkg/providers"
@@ -113,7 +114,7 @@ Public surfaces:
   • Ecosystem hub: https://github.com/solizardking/solana-clawd
   • x402 gateway: https://zk.x402.wtf
   • Terminal: https://cheshireterminal.ai`,
-		Example: "clawdbot agent -m \"What is SOL price?\"\nclawdbot ooda --interval 60\nclawdbot ooda --hw-bus 1\nclawdbot hardware scan\nclawdbot hardware demo\nclawdbot status",
+		Example: "clawdbot agent -m \"What is SOL price?\"\nclawdbot ooda --interval 60\nclawdbot ooda harness --ticks 50 --sleep 0\nclawdbot ooda --hw-bus 1\nclawdbot hardware scan\nclawdbot hardware demo\nclawdbot status",
 	}
 
 	cmd.AddCommand(
@@ -998,7 +999,12 @@ Hardware integration (when --hw-bus is set):
   Button A → trigger immediate cycle
   Button B → toggle simulated/live mode
   Button C → emergency stop (closes all positions)
-  Knob    → real-time RSI threshold tuning (twist to adjust, press to reset)`,
+  Knob    → real-time RSI threshold tuning (twist to adjust, press to reset)
+
+TypeScript paper/devnet harness:
+  clawdbot ooda harness --ticks 50 --sleep 0
+  clawdbot ooda harness --tui
+  clawdbot ooda journal --tail 20`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
@@ -1088,7 +1094,172 @@ Hardware integration (when --hw-bus is set):
 	cmd.Flags().IntVar(&hwBus, "hw-bus", 1, "I2C bus number for Modulino® hardware")
 	cmd.Flags().BoolVar(&noHW, "no-hw", false, "Disable hardware integration")
 	cmd.Flags().BoolVar(&simMode, "sim", false, "Force simulated mode (no live trades)")
+	cmd.AddCommand(
+		NewOODAHarnessCommand(),
+		NewOODAJournalCommand(),
+	)
 	return cmd
+}
+
+func NewOODAHarnessCommand() *cobra.Command {
+	var (
+		dir             string
+		tsx             string
+		ticks           int
+		sleep           float64
+		seed            int
+		commitEvery     int
+		timeoutSec      int
+		useLLM          bool
+		tui             bool
+		goblin          bool
+		perpsOI         bool
+		perpsSymbol     string
+		perpsSignalMode string
+		perpsOIMock     bool
+		planOnly        bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "harness",
+		Short: "Run the local TypeScript OODA paper/devnet harness",
+		Long: `Run ooda/loop.ts through the main ClawdBot CLI.
+
+This harness is intentionally paper/devnet-only. It writes the append-only tick
+journal under ooda/journal/ticks.jsonl and can optionally pipe structured JSONL
+into ooda/tui.ts for the ANSI dashboard.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			runner, opts := buildOODAHarnessRun(cmd, dir, tsx, timeoutSec, oodaPkg.LoopOptions{
+				Ticks:           ticks,
+				SleepSeconds:    sleep,
+				Seed:            seed,
+				CommitEvery:     commitEvery,
+				TUI:             tui,
+				LLM:             useLLM,
+				Goblin:          goblin,
+				PerpsOI:         perpsOI,
+				PerpsSymbol:     perpsSymbol,
+				PerpsSignalMode: perpsSignalMode,
+				PerpsOIMock:     perpsOIMock,
+			})
+
+			plan := runner.Plan(opts)
+			if planOnly {
+				return writeJSON(plan)
+			}
+
+			fmt.Printf("%sOODA Harness%s\n", colorGreen, colorReset)
+			fmt.Printf("%sDir: %s%s\n", colorDim, plan.Dir, colorReset)
+			fmt.Printf("%sJournal: %s%s\n\n", colorDim, plan.Journal, colorReset)
+
+			ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+			defer stop()
+			return runner.RunAttached(ctx, opts)
+		},
+	}
+
+	cmd.Flags().StringVar(&dir, "dir", defaultOODADir(), "OODA harness directory")
+	cmd.Flags().StringVar(&tsx, "tsx", "", "tsx executable override (defaults to ooda/node_modules/.bin/tsx)")
+	cmd.Flags().IntVar(&ticks, "ticks", 50, "Number of ticks to run")
+	cmd.Flags().Float64Var(&sleep, "sleep", 0.25, "Seconds between ticks")
+	cmd.Flags().IntVar(&seed, "seed", 42, "Seed for synthetic candles")
+	cmd.Flags().IntVar(&commitEvery, "commit-every", 0, "Git commit the journal every N ticks")
+	cmd.Flags().IntVar(&timeoutSec, "timeout", 0, "Optional harness timeout in seconds")
+	cmd.Flags().BoolVar(&useLLM, "llm", false, "Use the LLM decision chain when keys are available")
+	cmd.Flags().BoolVar(&tui, "tui", false, "Pipe loop JSONL into the local ANSI TUI")
+	cmd.Flags().BoolVar(&goblin, "goblin", false, "Use the aggressive paper/devnet prompt variant")
+	cmd.Flags().BoolVar(&perpsOI, "perps-oi", false, "Fetch perps open-interest signal when available")
+	cmd.Flags().StringVar(&perpsSymbol, "perps-symbol", "", "Perps symbol override, for example SOL-PERP")
+	cmd.Flags().StringVar(&perpsSignalMode, "perps-signal-mode", "", "Perps signal mode override")
+	cmd.Flags().BoolVar(&perpsOIMock, "perps-oi-mock", false, "Use mock perps OI data")
+	cmd.Flags().BoolVar(&planOnly, "plan", false, "Print the launch plan and exit")
+	return cmd
+}
+
+func NewOODAJournalCommand() *cobra.Command {
+	var (
+		dir     string
+		tail    int
+		jsonOut bool
+	)
+	cmd := &cobra.Command{
+		Use:   "journal",
+		Short: "Tail the local TypeScript OODA harness journal",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			runner := newOODARunner(dir, "", 0)
+			lines, err := runner.ReadJournalTail(tail)
+			if err != nil {
+				return err
+			}
+			if jsonOut {
+				entries := make([]any, 0, len(lines))
+				for _, line := range lines {
+					var entry any
+					if err := json.Unmarshal([]byte(line), &entry); err != nil {
+						entry = line
+					}
+					entries = append(entries, entry)
+				}
+				return writeJSON(map[string]any{
+					"journal": runner.JournalPath(),
+					"entries": entries,
+				})
+			}
+			fmt.Printf("%s\n", runner.JournalPath())
+			if len(lines) == 0 {
+				fmt.Println("(empty)")
+				return nil
+			}
+			for _, line := range lines {
+				fmt.Println(line)
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&dir, "dir", defaultOODADir(), "OODA harness directory")
+	cmd.Flags().IntVar(&tail, "tail", 20, "Number of journal lines to print")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "Print parsed JSON")
+	return cmd
+}
+
+func buildOODAHarnessRun(cmd *cobra.Command, dir, tsx string, timeoutSec int, opts oodaPkg.LoopOptions) (*oodaPkg.Runner, oodaPkg.LoopOptions) {
+	if !cmd.Flags().Changed("ticks") {
+		opts.Ticks = 0
+	}
+	if cmd.Flags().Changed("sleep") {
+		opts.SleepSet = true
+	} else {
+		opts.SleepSeconds = 0
+	}
+	if cmd.Flags().Changed("seed") {
+		opts.SeedSet = true
+	} else {
+		opts.Seed = 0
+	}
+	if !cmd.Flags().Changed("perps-symbol") {
+		opts.PerpsSymbol = ""
+	}
+	if !cmd.Flags().Changed("perps-signal-mode") {
+		opts.PerpsSignalMode = ""
+	}
+	return newOODARunner(dir, tsx, timeoutSec), opts
+}
+
+func newOODARunner(dir, tsx string, timeoutSec int) *oodaPkg.Runner {
+	timeout := time.Duration(timeoutSec) * time.Second
+	return oodaPkg.New(oodaPkg.Config{
+		Dir:     dir,
+		TSX:     tsx,
+		Timeout: timeout,
+	})
+}
+
+func defaultOODADir() string {
+	root := projectRootFromWD()
+	if found, err := oodaPkg.FindDir(root); err == nil {
+		return found
+	}
+	return filepath.Join(root, "ooda")
 }
 
 // ── Solana Command ───────────────────────────────────────────────────

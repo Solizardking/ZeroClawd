@@ -27,6 +27,7 @@ export interface Observations {
   now: string;
   mode: string;
   network: string;
+  prompt_markdown?: string;
   candles: Candle[];
   perps_oi_signal?: unknown;
   book: {
@@ -40,7 +41,7 @@ export interface Observations {
 
 function getPrompt(obs: Observations): string {
   const clwdPath = join(__dirname, 'CLAWD.md');
-  const clwdContent = readFileSync(clwdPath, 'utf8');
+  const clwdContent = obs.prompt_markdown ?? readFileSync(clwdPath, 'utf8');
   // Strip YAML frontmatter
   const body = clwdContent.replace(/^---[\s\S]*?---\n?/, '').trim();
 

@@ -40,8 +40,9 @@ GOFILES   := $(shell find cmd pkg web/backend -type f -name '*.go')
 BUILD_DIR := ./build
 BIN_CLI   := $(BUILD_DIR)/clawdbot
 BIN_TUI   := $(BUILD_DIR)/clawdbot-tui
+OODA_DIR  := ./ooda
 
-.PHONY: all build orin rpi riscv macos cross tui web docker docker-orin clean install test lint verify audit release-check deps scan-i2c help
+.PHONY: all build orin rpi riscv macos cross tui web docker docker-orin clean install test lint verify audit release-check deps ooda-deps ooda-lint ooda-loop ooda-tui ooda-verify scan-i2c help
 
 # ── Default ───────────────────────────────────────────────────────────
 
@@ -191,6 +192,24 @@ deps:
 	$(GO) mod download
 	$(GO) mod tidy
 
+ooda-deps:
+	@echo "📦 Installing OODA TypeScript harness dependencies..."
+	npm --prefix $(OODA_DIR) ci
+
+ooda-lint:
+	@echo "🔍 Type-checking OODA TypeScript harness..."
+	npm --prefix $(OODA_DIR) run lint
+
+ooda-loop:
+	@echo "🔄 Running OODA paper/devnet harness smoke loop..."
+	npm --prefix $(OODA_DIR) --silent run loop -- --ticks 10 --sleep 0
+
+ooda-tui:
+	@echo "📟 Running OODA paper/devnet harness with ANSI TUI..."
+	npm --prefix $(OODA_DIR) --silent run loop -- --ticks 200 --sleep 0.4 --tui | npm --prefix $(OODA_DIR) --silent run tui
+
+ooda-verify: ooda-lint ooda-loop
+
 # ── Hardware ──────────────────────────────────────────────────────────
 
 scan-i2c:
@@ -237,6 +256,11 @@ help:
 	@echo "  audit       verify + govulncheck when installed"
 	@echo "  release-check verify + tracked artifact guard"
 	@echo "  deps        Download dependencies"
+	@echo "  ooda-deps   Install TypeScript OODA harness dependencies"
+	@echo "  ooda-lint   Type-check the TypeScript OODA harness"
+	@echo "  ooda-loop   Run a 10-tick OODA harness smoke loop"
+	@echo "  ooda-tui    Run the OODA harness piped into its ANSI TUI"
+	@echo "  ooda-verify Type-check and smoke-run the OODA harness"
 	@echo "  scan-i2c    Scan for Modulino sensors"
 	@echo "  clean       Remove build artifacts"
 	@echo ""

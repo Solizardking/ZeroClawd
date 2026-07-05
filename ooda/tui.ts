@@ -79,10 +79,11 @@ function sparkline(prices: number[], width = 30): string {
   const max = Math.max(...slice);
   const range = max - min || 1;
   return slice
-    .map(p => {
+    .map((p, i) => {
       const idx = Math.round(((p - min) / range) * (SPARK.length - 1));
       const bar = SPARK[idx] ?? '▄';
-      const isUp = p > prices[prices.indexOf(p) - 1];
+      const previous = i > 0 ? slice[i - 1]! : p;
+      const isUp = p >= previous;
       return isUp ? chalk.green(bar) : chalk.red(bar);
     })
     .join('');

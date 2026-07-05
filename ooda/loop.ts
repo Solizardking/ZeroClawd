@@ -43,10 +43,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { values: flags } = parseArgs({
   options: {
-    ticks:          { type: 'string',  default: '50' },
-    sleep:          { type: 'string',  default: '0.25' },
-    seed:           { type: 'string',  default: '42' },
-    'commit-every': { type: 'string',  default: '0' },
+    ticks:          { type: 'string' },
+    sleep:          { type: 'string' },
+    seed:           { type: 'string' },
+    'commit-every': { type: 'string' },
     tui:            { type: 'boolean', default: false },
     llm:            { type: 'boolean', default: false },
     mode:           { type: 'string',  default: 'paper' },
@@ -62,10 +62,18 @@ const { values: flags } = parseArgs({
 const GOBLIN_MODE  = flags['goblin'] as boolean;
 // Goblin mode: load goblin.md instead of CLAWD.md, use tighter sleep, more ticks default
 const CLAWD_CONFIG_FILE = GOBLIN_MODE ? 'goblin.md' : 'CLAWD.md';
-const TICKS        = parseInt(flags['ticks'] as string, 10) || (GOBLIN_MODE ? 100 : 50);
-const SLEEP_MS     = GOBLIN_MODE ? 0 : Math.round(parseFloat(flags['sleep'] as string) * 1000);
-const SEED         = parseInt(flags['seed'] as string, 10);
-const COMMIT_EVERY = parseInt(flags['commit-every'] as string, 10);
+const tickFlag     = flags['ticks'] as string | undefined;
+const sleepFlag    = flags['sleep'] as string | undefined;
+const seedFlag     = flags['seed'] as string | undefined;
+const commitFlag   = flags['commit-every'] as string | undefined;
+const parsedTicks  = tickFlag ? Number.parseInt(tickFlag, 10) : NaN;
+const parsedSleep  = sleepFlag ? Number.parseFloat(sleepFlag) : 0.25;
+const parsedSeed   = seedFlag ? Number.parseInt(seedFlag, 10) : 42;
+const parsedCommit = commitFlag ? Number.parseInt(commitFlag, 10) : 0;
+const TICKS        = Number.isFinite(parsedTicks) && parsedTicks > 0 ? parsedTicks : (GOBLIN_MODE ? 100 : 50);
+const SLEEP_MS     = GOBLIN_MODE ? 0 : Math.round((Number.isFinite(parsedSleep) ? parsedSleep : 0.25) * 1000);
+const SEED         = Number.isFinite(parsedSeed) ? parsedSeed : 42;
+const COMMIT_EVERY = Number.isFinite(parsedCommit) && parsedCommit > 0 ? parsedCommit : 0;
 const TUI_MODE     = flags['tui'] as boolean;
 const USE_LLM      = flags['llm'] as boolean || GOBLIN_MODE;  // goblin always uses LLM when key available
 const USE_PERPS_OI = flags['perps-oi'] as boolean;
@@ -237,6 +245,7 @@ async function runLoop(): Promise<void> {
       now: now.toISOString(),
       mode: 'paper',
       network: 'devnet',
+      prompt_markdown: configContent,
       candles: candles.slice(-10),  // send last 10 to model
       perps_oi_signal: perpsOiSignal,
       book: {

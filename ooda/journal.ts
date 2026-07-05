@@ -8,7 +8,7 @@
  * Clawd rule: "State lives in git."
  */
 
-import { appendFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Decision } from './validate.js';
@@ -49,7 +49,7 @@ export function readLastEntries(n = 3): TickEntry[] {
 /** Truncate journal (for fresh run) */
 export function clearJournal(): void {
   if (existsSync(JOURNAL_PATH)) {
-    appendFileSync(JOURNAL_PATH, '', 'utf8'); // keep file, mark empty-ish
+    writeFileSync(JOURNAL_PATH, '', 'utf8');
   }
 }
 

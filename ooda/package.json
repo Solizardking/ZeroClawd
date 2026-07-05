@@ -16,7 +16,9 @@
   "scripts": {
     "loop": "tsx loop.ts",
     "tui": "tsx tui.ts",
-    "lint": "tsc --project tsconfig.json"
+    "lint": "tsc --project tsconfig.json",
+    "smoke": "tsx loop.ts --ticks 3 --sleep 0",
+    "verify": "npm run lint && npm run smoke"
   },
   "dependencies": {
     "chalk": "^5.6.2",
