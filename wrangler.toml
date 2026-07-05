@@ -1,13 +1,19 @@
 name = "clawdbot-install"
 main = "cloudflare/install-worker.js"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-07-05"
 workers_dev = true
 
 [vars]
 UPSTREAM_INSTALL_URL = "https://raw.githubusercontent.com/Solizardking/clawdbot-go/main/install.sh"
 DEFAULT_COMPLETE = "1"
+DEFAULT_ZK_PRIMITIVES_DIR = "$HOME/.clawdbot/src/zk-primitives"
 PROJECT_REPO = "https://github.com/Solizardking/clawdbot-go"
 ECOSYSTEM_HUB = "https://github.com/solizardking/solana-clawd"
+X402_GATEWAY = "https://zk.x402.wtf"
+TERMINAL_URL = "https://cheshireterminal.ai"
+ZK_AGENT_PACKAGE = "@clawd/zk-shark-agent"
+ZK_CLIENT_PACKAGE = "@clawd/zk-client"
+ZK_PROGRAM_ID = "CLAWDzk11111111111111111111111111111111111"
 
 [[routes]]
 pattern = "install.onchainai.fund"
