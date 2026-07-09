@@ -21,6 +21,12 @@ const (
 	TerminalURL     = "https://cheshireterminal.ai"
 	ZkRouterBaseURL = "https://clawdrouter-zk.fly.dev/v1"
 	PublicRPCURL    = "https://zk.x402.wtf/api/solana/rpc-public"
+
+	XAIBaseURL      = "https://api.x.ai/v1"
+	XAIDefaultModel = "grok-4.5"
+
+	DeepSeekBaseURL      = "https://api.deepseek.com"
+	DeepSeekDefaultModel = "deepseek-v4-pro"
 )
 
 // ── Config Structure ─────────────────────────────────────────────────
@@ -101,6 +107,8 @@ type ProvidersConfig struct {
 	Groq       ProviderEntry `json:"groq"`
 	Ollama     ProviderEntry `json:"ollama"`
 	NVIDIA     ProviderEntry `json:"nvidia"`
+	XAI        ProviderEntry `json:"xai"`
+	DeepSeek   ProviderEntry `json:"deepseek"`
 }
 
 type ProviderEntry struct {
@@ -584,6 +592,32 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("ZKROUTER_BASE_URL"); v != "" && len(cfg.ModelList) > 0 {
 		cfg.ModelList[0].APIBase = v
 	}
+	// XAI_API_KEY / DEEPSEEK_API_KEY — when set, these take priority over the
+	// free zkrouter default so agent calls land on a real, known-good model.
+	var directProviders []ModelEntry
+	if v := os.Getenv("XAI_API_KEY"); v != "" {
+		base := firstNonEmptyEnv("XAI_BASE_URL", XAIBaseURL)
+		cfg.Providers.XAI = ProviderEntry{APIKey: v, APIBase: base}
+		directProviders = append(directProviders, ModelEntry{
+			ModelName: "grok",
+			Model:     firstNonEmptyEnv("XAI_MODEL", XAIDefaultModel),
+			APIKey:    v,
+			APIBase:   base,
+		})
+	}
+	if v := os.Getenv("DEEPSEEK_API_KEY"); v != "" {
+		base := firstNonEmptyEnv("DEEPSEEK_BASE_URL", DeepSeekBaseURL)
+		cfg.Providers.DeepSeek = ProviderEntry{APIKey: v, APIBase: base}
+		directProviders = append(directProviders, ModelEntry{
+			ModelName: "deepseek",
+			Model:     firstNonEmptyEnv("DEEPSEEK_MODEL", DeepSeekDefaultModel),
+			APIKey:    v,
+			APIBase:   base,
+		})
+	}
+	if len(directProviders) > 0 {
+		cfg.ModelList = append(directProviders, cfg.ModelList...)
+	}
 	// Phoenix perps API
 	if v := os.Getenv("PHOENIX_API_URL"); v != "" {
 		cfg.Solana.PhoenixAPIURL = v
@@ -689,6 +723,13 @@ func applyEnvOverrides(cfg *Config) {
 		// stored for use by Solana RPC client as X-ClawdBot-Id header
 		_ = v
 	}
+}
+
+func firstNonEmptyEnv(envKey, fallback string) string {
+	if v := os.Getenv(envKey); v != "" {
+		return v
+	}
+	return fallback
 }
 
 func parseEnvBool(value string) (bool, bool) {
