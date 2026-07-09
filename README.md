@@ -1,8 +1,10 @@
 <div align="center">
 
 <picture>
-  <img src="docs/assets/clawdbot-hero.svg" alt="ClawdBot Go animated Solana runtime hero" width="100%">
+  <img src="docs/assets/zero-clawd-hero.svg" alt="Zero Clawd — animated cypherpunk Solana runtime hero" width="100%">
 </picture>
+
+# ZERO CLAWD
 
 ### 🦞 Sovereign Solana Trading Intelligence
 
@@ -107,7 +109,7 @@ a full mapping from each classical algorithm to its ZK on-chain equivalent.
 
 ## Overview
 
-**ClawdBot** is the world's first **Solana-native sovereign AI agent** — a full-stack autonomous trading intelligence bound by Clawd's full **six-law harness**: three immutable on-chain laws and three off-chain interpretive laws. Built in pure Go for minimal resource consumption, it orchestrates on-chain data providers, zk primitives, and x402-gated surfaces through a military-grade OODA decision loop with persistent epistemological memory.
+**Zero Clawd** is the world's first **Solana-native sovereign AI agent** — a full-stack autonomous trading intelligence bound by Clawd's full **six-law harness**: three immutable on-chain laws and three off-chain interpretive laws. Built in pure Go for minimal resource consumption, it orchestrates on-chain data providers, zk primitives, and x402-gated surfaces through a military-grade OODA decision loop with persistent epistemological memory.
 
 The system compiles to three standalone binaries that run on everything from NVIDIA Jetson edge devices to cloud VMs — no containers required, no runtime dependencies, instant boot.
 
@@ -254,6 +256,17 @@ Use `CLAWDBOT_SOURCE_MODE=archive` for small installs. Use
 `CLAWDBOT_SOURCE_MODE=git` only when the installed source must be a mutable git
 checkout.
 
+### Product Name Compatibility
+
+The project is branded **Zero Clawd**. The CLI binary, Go module path, environment
+variable prefix, and on-disk workspace all keep their existing `clawdbot` /
+`CLAWDBOT_*` / `.clawdbot` names for compatibility — only the public-facing name
+changed. In practice:
+
+- install and run the same way: `clawdbot agent`, `clawdbot ooda`, `CLAWDBOT_HOME`, `~/.clawdbot/`
+- `ClawdBot` in older docs, issues, and commit history refers to the same project
+- treat a future binary/env-var rename as a deliberate breaking change, not as unfinished accidental drift
+
 ### Module Path Compatibility
 
 The public repository is:
@@ -372,7 +385,7 @@ clawdbot-go/
 
 ## ⚖️ The Six-Law Harness
 
-ClawdBot is bound by the **Clawd Constitution** — the world's first Solana-native agent harness constitution. It carries two coordinated law sets:
+Zero Clawd is bound by the **Clawd Constitution** — the world's first Solana-native agent harness constitution. It carries two coordinated law sets:
 
 ### Three On-Chain Laws (Immutable, hash-attested at spawn)
 
@@ -733,7 +746,7 @@ ssh user@orin-nano './clawdbot ooda --hw-bus 1 --interval 60'
 
 ## 🔬 Agent Constitution Library
 
-ClawdBot is the reference implementation of the **Clawd Constitution** — the world's first Solana-native agent harness constitution. Every spawn inherits these documents:
+Zero Clawd is the reference implementation of the **Clawd Constitution** — the world's first Solana-native agent harness constitution. Every spawn inherits these documents:
 
 | Document | Purpose |
 |:---------|:--------|

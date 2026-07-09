@@ -1,6 +1,6 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────
-# ClawdBot Go :: One-Shot Start Script
+# Zero Clawd :: One-Shot Start Script (CLI binary: clawdbot)
 # Installs dependencies, compiles everything, runs animated launcher
 # ─────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -18,7 +18,7 @@ ROOT="$SCRIPT_DIR"
 cd "$ROOT"
 
 echo ""
-echo -e "${GREEN}    🦞 ClawdBot Go — One-Shot Start${RESET}"
+echo -e "${GREEN}    🦞 Zero Clawd — One-Shot Start${RESET}"
 echo -e "${DIM}    ────────────────────────────────${RESET}"
 echo -e "${DIM}    Runtime: https://github.com/Solizardking/clawdbot-go${RESET}"
 echo -e "${DIM}    Hub:     https://github.com/solizardking/solana-clawd${RESET}"

@@ -1,4 +1,4 @@
-# ── ClawdBot Go :: Makefile ─────────────────────────────────────────────
+# ── Zero Clawd :: Makefile (CLI binary: clawdbot) ───────────────────────
 # Build targets for x86_64, ARM64 (NVIDIA Orin Nano), and Arduino bridge
 #
 # Usage:
