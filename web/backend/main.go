@@ -458,6 +458,21 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]any{"venues": venues})
 	})
 
+	// API: Lobster Council — decentralized governance agents
+	mux.HandleFunc("/api/lobster-council", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		members, err := loadLobsterCouncil(filepath.Dir(absPath))
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{
+			"council": "Lobster Council",
+			"members": members,
+			"count":   len(members),
+		})
+	})
+
 	mux.HandleFunc("/api/doctor", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		cfg, err := loadRuntimeConfig(absPath)
@@ -588,6 +603,100 @@ func urlStatus(value, expected string) string {
 		return "default_public"
 	}
 	return "custom"
+}
+
+// LobsterCouncilMember represents a decentralized governance agent.
+type LobsterCouncilMember struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Category    string `json:"category"`
+	Avatar      string `json:"avatar,omitempty"`
+	Homepage    string `json:"homepage,omitempty"`
+}
+
+func loadLobsterCouncil(projectRoot string) ([]LobsterCouncilMember, error) {
+	// Use the lobster-council agents directory from the agents catalog path
+	candidateDirs := []string{
+		filepath.Join(os.Getenv("CLAWDBOT_AGENTS_DIR"), "lobster-council"),
+	}
+
+	home, _ := os.UserHomeDir()
+	candidateDirs = append(candidateDirs,
+		filepath.Join(home, "agents", "agents", "src", "lobster-council"),
+		filepath.Join(projectRoot, "lobster-council"),
+	)
+
+	var councilDir string
+	for _, d := range candidateDirs {
+		if d == "" {
+			continue
+		}
+		info, err := os.Stat(d)
+		if err == nil && info.IsDir() {
+			councilDir = d
+			break
+		}
+	}
+	if councilDir == "" {
+		return nil, fmt.Errorf("lobster-council directory not found")
+	}
+
+	entries, err := os.ReadDir(councilDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var members []LobsterCouncilMember
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(councilDir, entry.Name()))
+		if err != nil {
+			continue
+		}
+		var raw struct {
+			Identifier string         `json:"identifier"`
+			Homepage   string         `json:"homepage"`
+			Meta       map[string]any `json:"meta"`
+		}
+		if err := json.Unmarshal(data, &raw); err != nil {
+			continue
+		}
+		id := strings.TrimSpace(raw.Identifier)
+		if id == "" {
+			continue
+		}
+		name := raw.Identifier
+		if raw.Meta != nil {
+			if title, ok := raw.Meta["title"]; ok {
+				if s, ok := title.(string); ok {
+					name = s
+				}
+			}
+		}
+		member := LobsterCouncilMember{
+			ID:          id,
+			Name:        name,
+			Category:    "governance",
+			Homepage:    raw.Homepage,
+		}
+		if raw.Meta != nil {
+			if desc, ok := raw.Meta["description"]; ok {
+				if s, ok := desc.(string); ok {
+					member.Description = s
+				}
+			}
+			if av, ok := raw.Meta["avatar"]; ok {
+				if s, ok := av.(string); ok {
+					member.Avatar = s
+				}
+			}
+		}
+		members = append(members, member)
+	}
+	return members, nil
 }
 
 // watchlistMints returns the OODA watchlist, defaulting to SOL when empty so the
