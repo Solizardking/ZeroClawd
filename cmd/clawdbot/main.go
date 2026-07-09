@@ -38,6 +38,7 @@ import (
 	"github.com/8bitlabs/clawdbot/pkg/providers"
 	skillsPkg "github.com/8bitlabs/clawdbot/pkg/skills"
 	"github.com/8bitlabs/clawdbot/pkg/solana"
+	"github.com/8bitlabs/clawdbot/pkg/spinner"
 	"github.com/8bitlabs/clawdbot/pkg/trading"
 	"github.com/8bitlabs/clawdbot/pkg/vulcan"
 	walletPkg "github.com/8bitlabs/clawdbot/pkg/wallet"
@@ -136,6 +137,7 @@ Public surfaces:
 		NewWebCommand(),
 		NewPerpsCommand(),
 		NewZeroCommand(),
+		NewSpinnerCommand(),
 	)
 
 	return cmd
@@ -160,6 +162,89 @@ func NewLawsCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "Print JSON")
+	return cmd
+}
+
+// ── Spinner Command ──────────────────────────────────────────────────
+
+func NewSpinnerCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "spinner",
+		Short: "List, preview, or set the themed spinner verb pack used by clawdbot agent",
+	}
+
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "List available spinner packs",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load()
+			if err != nil {
+				return fmt.Errorf("config error: %w", err)
+			}
+			active := cfg.Agents.Defaults.SpinnerPack
+			if active == "" {
+				active = spinner.DefaultPack
+			}
+			for _, name := range spinner.Packs() {
+				marker := "  "
+				if name == active {
+					marker = fmt.Sprintf("%s>%s ", colorGreen, colorReset)
+				}
+				fmt.Printf("%s%s\n", marker, name)
+			}
+			return nil
+		},
+	}
+
+	preview := &cobra.Command{
+		Use:   "preview <pack>",
+		Short: "Animate a spinner pack for a few seconds",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pack := args[0]
+			if verbs := spinner.Verbs(pack); len(verbs) == 0 {
+				return fmt.Errorf("pack %q not found; run 'clawdbot spinner list'", pack)
+			}
+			sp := spinner.New(pack, colorDim, colorReset)
+			sp.Start()
+			time.Sleep(3 * time.Second)
+			sp.Stop()
+			fmt.Printf("%s✔%s previewed pack %q\n", colorGreen, colorReset, pack)
+			return nil
+		},
+	}
+
+	set := &cobra.Command{
+		Use:   "set <pack>",
+		Short: "Set the default spinner pack in the ClawdBot config",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pack := args[0]
+			names := spinner.Packs()
+			found := false
+			for _, name := range names {
+				if name == pack {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("pack %q not found; run 'clawdbot spinner list'", pack)
+			}
+			cfg, err := config.Load()
+			if err != nil {
+				return fmt.Errorf("config error: %w", err)
+			}
+			cfg.Agents.Defaults.SpinnerPack = pack
+			if err := config.Save(cfg); err != nil {
+				return fmt.Errorf("save config: %w", err)
+			}
+			fmt.Printf("%s✔%s spinner pack set to %q\n", colorGreen, colorReset, pack)
+			return nil
+		},
+	}
+
+	cmd.AddCommand(list, preview, set)
 	return cmd
 }
 
@@ -360,7 +445,10 @@ func NewAgentCommand() *cobra.Command {
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 				defer cancel()
+				sp := spinner.New(cfg.Agents.Defaults.SpinnerPack, colorDim, colorReset)
+				sp.Start()
 				answer, err := a.ProcessDirect(ctx, message)
+				sp.Stop()
 				if err != nil {
 					return fmt.Errorf("agent error: %w", err)
 				}
@@ -2355,7 +2443,10 @@ func runInteractiveAgent(cfg *config.Config) error {
 			fmt.Printf("%s🔍 Searching memory: %s%s\n", colorTeal, input[8:], colorReset)
 		default:
 			ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+			sp := spinner.New(cfg.Agents.Defaults.SpinnerPack, colorDim, colorReset)
+			sp.Start()
 			answer, err := a.ProcessDirect(ctx, input)
+			sp.Stop()
 			cancel()
 			if err != nil {
 				fmt.Printf("%s[ERROR]%s %v\n\n", colorRed, colorReset, err)

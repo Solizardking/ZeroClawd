@@ -11,6 +11,7 @@ import (
 
 	dnaPkg "github.com/8bitlabs/clawdbot/pkg/dna"
 	skillsPkg "github.com/8bitlabs/clawdbot/pkg/skills"
+	"github.com/8bitlabs/clawdbot/pkg/spinner"
 )
 
 const (
@@ -57,6 +58,7 @@ type AgentDefaults struct {
 	MaxTokens           int     `json:"max_tokens"`
 	Temperature         float64 `json:"temperature"`
 	MaxToolIterations   int     `json:"max_tool_iterations"`
+	SpinnerPack         string  `json:"spinner_pack"`
 }
 
 // ── Model List (ClawdBot-compatible) ─────────────────────────────────
@@ -274,6 +276,7 @@ func DefaultConfig() *Config {
 				MaxTokens:           8192,
 				Temperature:         0.7,
 				MaxToolIterations:   20,
+				SpinnerPack:         spinner.DefaultPack,
 			},
 		},
 		ModelList: []ModelEntry{
@@ -623,6 +626,9 @@ func applyEnvOverrides(cfg *Config) {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			cfg.Vulcan.TimeoutSeconds = n
 		}
+	}
+	if v := os.Getenv(spinner.EnvPack); v != "" {
+		cfg.Agents.Defaults.SpinnerPack = v
 	}
 	if v := os.Getenv("CLAWDBOT_CLAWD_CODE_DIR"); v != "" {
 		cfg.ClawdCode.Dir = v
