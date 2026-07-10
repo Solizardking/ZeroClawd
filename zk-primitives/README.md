@@ -1,5 +1,13 @@
 # 🦞🔐 Clawd ZK Primitives
 
+<p align="center">
+  <img
+    src="./docs/assets/clawd-zk-hero.svg"
+    alt="Clawd ZK Primitives — animated nullifiers, Groth16, and Light Protocol hero"
+    width="100%"
+  />
+</p>
+
 > **A zero-knowledge primitive layer for Solana-native AI models.**
 > Built on [Light Protocol](https://www.zkcompression.com).
 > Powers the on-chain identity, attestation, and encrypted-state
@@ -39,6 +47,8 @@ The edge install and metadata handoff is documented in
 zk-primitives/
 ├── README.md                                ← you are here
 ├── docs/
+│   ├── assets/
+│   │   └── clawd-zk-hero.svg                ← animated GitHub-safe hero
 │   ├── ARCHITECTURE.md                      ← deep dive: design, costs, security
 │   ├── INTEGRATION.md                       ← runtime catalog and trust gates
 │   └── EDGE_DISTRIBUTION.md                 ← Cloudflare metadata surface

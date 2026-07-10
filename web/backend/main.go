@@ -157,13 +157,7 @@ func main() {
 	})
 
 	// API: Health
-	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "ok",
-			"agent":  "clawdbot-go",
-		})
-	})
+	mux.HandleFunc("/api/health", healthAPIHandler())
 
 	mux.HandleFunc("/api/install", installAPIHandler())
 	mux.HandleFunc("/api/installs", installsAPIHandler())
@@ -1359,6 +1353,22 @@ func webEnvBool(key string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// healthPayload is the JSON body returned by GET /api/health.
+// Kept as a pure function so smoke tests and deploy checks can pin the contract.
+func healthPayload() map[string]string {
+	return map[string]string{
+		"status": "ok",
+		"agent":  "clawdbot-go",
+	}
+}
+
+func healthAPIHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(healthPayload())
 	}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +13,35 @@ import (
 	"github.com/8bitlabs/clawdbot/pkg/strategy"
 	"github.com/8bitlabs/clawdbot/pkg/trading"
 )
+
+func TestHealthAPIHandler(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	rr := httptest.NewRecorder()
+	healthAPIHandler().ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rr.Code)
+	}
+	if ct := rr.Header().Get("Content-Type"); !strings.Contains(ct, "application/json") {
+		t.Fatalf("Content-Type = %q, want application/json", ct)
+	}
+
+	var body map[string]string
+	if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode health body: %v\nraw: %s", err, rr.Body.String())
+	}
+	if body["status"] != "ok" {
+		t.Fatalf("status = %q, want ok", body["status"])
+	}
+	if body["agent"] == "" {
+		t.Fatal("agent identity field is empty")
+	}
+	// Contract must match the pure payload helper used by the live handler.
+	want := healthPayload()
+	if body["status"] != want["status"] || body["agent"] != want["agent"] {
+		t.Fatalf("body = %#v, want %#v", body, want)
+	}
+}
 
 func TestRedactedConfigMasksSecrets(t *testing.T) {
 	cfg := config.DefaultConfig()
