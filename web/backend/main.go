@@ -506,9 +506,9 @@ func main() {
 	mux.HandleFunc("/api/vault/key", vaultKeyHandler(projectRoot))
 	mux.HandleFunc("/api/vault/export", vaultExportHandler(projectRoot))
 
-	// Serve embedded frontend (or static files)
-	frontendDir := filepath.Join(filepath.Dir(absPath), "web", "frontend", "dist")
-	if _, err := os.Stat(frontendDir); err == nil {
+	// Serve built frontend from the monorepo (project root), not the config dir.
+	frontendDir := resolveFrontendDir(projectRoot, absPath)
+	if frontendDir != "" {
 		mux.Handle("/", http.FileServer(http.Dir(frontendDir)))
 	} else {
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -1486,17 +1486,42 @@ func loggerMiddleware(next http.Handler) http.Handler {
 
 // findProjectRoot walks up from the config dir to find the go.mod file.
 func findProjectRoot(configPath string) string {
-	dir := filepath.Dir(configPath)
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return dir
-		}
-		dir = parent
+	candidates := []string{filepath.Dir(configPath)}
+	if cwd, err := os.Getwd(); err == nil {
+		candidates = append(candidates, cwd)
 	}
+	for _, start := range candidates {
+		dir := start
+		for {
+			if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+				return dir
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+	return filepath.Dir(configPath)
+}
+
+// resolveFrontendDir finds web/frontend/dist relative to the monorepo root,
+// cwd, or (legacy) the config file directory.
+func resolveFrontendDir(projectRoot, configPath string) string {
+	try := []string{
+		filepath.Join(projectRoot, "web", "frontend", "dist"),
+	}
+	if cwd, err := os.Getwd(); err == nil {
+		try = append(try, filepath.Join(cwd, "web", "frontend", "dist"))
+	}
+	try = append(try, filepath.Join(filepath.Dir(configPath), "web", "frontend", "dist"))
+	for _, dir := range try {
+		if st, err := os.Stat(dir); err == nil && st.IsDir() {
+			return dir
+		}
+	}
+	return ""
 }
 
 // listGoPackages scans the pkg/ directory for Go packages (directories with .go files).

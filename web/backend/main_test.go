@@ -14,6 +14,27 @@ import (
 	"github.com/8bitlabs/clawdbot/pkg/trading"
 )
 
+func TestResolveFrontendDirFindsDist(t *testing.T) {
+	// Prefer monorepo layout: <root>/web/frontend/dist when present.
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// web/backend → monorepo root
+	root := filepath.Clean(filepath.Join(cwd, "..", ".."))
+	dist := filepath.Join(root, "web", "frontend", "dist")
+	if _, err := os.Stat(dist); err != nil {
+		t.Skip("frontend dist not built; skip static path resolution")
+	}
+	got := resolveFrontendDir(root, filepath.Join(root, "configs", "dummy.json"))
+	if got != dist {
+		t.Fatalf("resolveFrontendDir = %q, want %q", got, dist)
+	}
+	if resolveFrontendDir("/nonexistent", "/tmp/nope.json") != "" {
+		t.Fatal("expected empty when no dist exists")
+	}
+}
+
 func TestHealthAPIHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	rr := httptest.NewRecorder()
