@@ -112,6 +112,8 @@ node_modules/
 build/
 .cache/
 dist/
+npm/clawdbot/vendor/**
+!npm/clawdbot/vendor/.gitkeep
 *.tsbuildinfo
 target/
 .turbo/

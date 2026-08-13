@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Clawd Bot</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #14181e;
+      --line: #232a33;
+      --text: #e8eef5;
+      --dim: #8b97a8;
+      --teal: #00d4ff;
+      --purple: #9945ff;
+      --green: #14f195;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; height: 100%;
+      background: var(--bg); color: var(--text);
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    .app {
+      display: flex; flex-direction: column; height: 100%;
+    }
+    header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #151a21, #0b0d10);
+    }
+    .mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #111;
+      box-shadow: 0 0 0 1px #2a3140, 0 0 24px rgba(0,212,255,.15);
+      display: grid; place-items: center;
+      font-size: 20px;
+    }
+    h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
+    h1 span { color: var(--teal); }
+    .sub { color: var(--dim); font-size: 12px; }
+    main { flex: 1; overflow: auto; padding: 20px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+    .log {
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: #c7d2df;
+      min-height: 180px;
+    }
+    footer {
+      display: flex; gap: 8px; padding: 14px 16px;
+      border-top: 1px solid var(--line);
+      background: #101318;
+    }
+    input {
+      flex: 1; border: 1px solid var(--line); background: #0b0d10;
+      color: var(--text); border-radius: 10px; padding: 10px 12px;
+      outline: none;
+    }
+    input:focus { border-color: var(--teal); }
+    button {
+      border: 0; border-radius: 10px; padding: 10px 14px;
+      background: linear-gradient(135deg, var(--teal), var(--purple));
+      color: #041018; font-weight: 650; cursor: pointer;
+    }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .chip {
+      border: 1px solid var(--line); color: var(--dim);
+      border-radius: 999px; padding: 4px 10px; font-size: 11px;
+      background: #0f1318;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="mark">🦞</div>
+      <div>
+        <h1>Clawd <span>Bot</span></h1>
+        <div class="sub">Sovereign Solana trading intelligence · zkrouter free AI</div>
+      </div>
+    </header>
+    <main>
+      <div class="card">
+        <div class="sub">Studio</div>
+        <div class="chips">
+          <span class="chip">version</span>
+          <span class="chip">agent</span>
+          <span class="chip">ooda --sim</span>
+          <span class="chip">solana trending</span>
+        </div>
+      </div>
+      <div class="card">
+        <div id="log" class="log">Clawd Bot is ready. Ask a question or run a command.</div>
+      </div>
+    </main>
+    <footer>
+      <input id="q" placeholder="What is SOL price?" />
+      <button id="go">Send</button>
+    </footer>
+  </div>
+  <script>
+    const log = document.getElementById("log");
+    const q = document.getElementById("q");
+    function append(text) { log.textContent = text; }
+    function run(args) {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.clawdbot) {
+        window.webkit.messageHandlers.clawdbot.postMessage({ args: args });
+        return;
+      }
+      append("Clawd Bot desktop bridge is available inside Clawd Bot.app.\nCLI: clawdbot " + args.join(" "));
+    }
+    window.clawdbotResult = function (text) { append(text || "(empty)"); };
+    document.getElementById("go").onclick = function () {
+      const text = q.value.trim() || "What is SOL price?";
+      if (text.startsWith("clawdbot ")) {
+        run(text.slice(9).split(/\s+/));
+        return;
+      }
+      run(["agent", "-m", text]);
+    };
+    run(["version"]);
+  </script>
+</body>
+</html>

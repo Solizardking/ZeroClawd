@@ -241,6 +241,32 @@ func (a *OODAAgent) Stop() {
 	}
 }
 
+// RunTicks runs n Observe-Orient-Decide-Act cycles then stops. Used by
+// `clawdbot ooda --sim` so the README one-shot prints a real tick and exits.
+func (a *OODAAgent) RunTicks(n int) error {
+	if n <= 0 {
+		return fmt.Errorf("tick count must be positive")
+	}
+	a.mu.Lock()
+	if a.running {
+		a.mu.Unlock()
+		return fmt.Errorf("agent already running")
+	}
+	a.running = true
+	a.stopCh = make(chan struct{})
+	a.mu.Unlock()
+
+	a.hooks.OnAgentStart(a.cfg.OODA.Mode, a.cfg.OODA.Watchlist)
+	for i := 0; i < n; i++ {
+		a.runCycle()
+	}
+	a.mu.Lock()
+	a.running = false
+	a.mu.Unlock()
+	a.hooks.OnAgentStop()
+	return nil
+}
+
 func (a *OODAAgent) IsRunning() bool {
 	a.mu.RLock()
 	defer a.mu.RUnlock()

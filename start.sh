@@ -54,6 +54,18 @@ fi
 # ── Create build dir ─────────────────────────────────────────────
 mkdir -p build
 
+# Always emit the README CLI so one-shot local start has ./build/clawdbot.
+if [ "${CLAWD_START_BUILD:-1}" = "1" ]; then
+  echo -e "  ${TEAL}⏳${RESET} Building clawdbot..."
+  make -C "$ROOT" build
+  echo -e "  ${GREEN}✔${RESET} ./build/clawdbot"
+fi
+
+if [ "${CLAWD_START_NO_LAUNCH:-}" = "1" ]; then
+  echo -e "  ${GREEN}✔${RESET} Built only (CLAWD_START_NO_LAUNCH=1)"
+  exit 0
+fi
+
 # ── Load .env into environment ───────────────────────────────────
 if [ -f ".env" ]; then
   set -a

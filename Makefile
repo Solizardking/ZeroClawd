@@ -42,7 +42,7 @@ BIN_CLI   := $(BUILD_DIR)/clawdbot
 BIN_TUI   := $(BUILD_DIR)/clawdbot-tui
 OODA_DIR  := ./ooda
 
-.PHONY: all build orin rpi riscv macos cross tui web docker docker-orin clean install test lint verify audit release-check deps ooda-deps ooda-lint ooda-loop ooda-tui ooda-verify scan-i2c help
+.PHONY: all build orin rpi riscv macos cross tui web docker docker-orin clean install test lint verify audit release-check deps ooda-deps ooda-lint ooda-loop ooda-tui ooda-verify scan-i2c dmg app npm-pack npm-publish help
 
 # ── Default ───────────────────────────────────────────────────────────
 
@@ -112,6 +112,35 @@ macos:
 	GOOS=darwin GOARCH=arm64 \
 		$(GOBUILD) -o $(BUILD_DIR)/clawdbot-macos ./cmd/clawdbot
 	@echo "✓ $(BUILD_DIR)/clawdbot-macos built"
+
+# ── Desktop app + studio DMG ──────────────────────────────────────────
+
+app: build
+	@chmod +x scripts/package-macos.sh
+	@echo "🦞 Building Clawd Bot.app (no DMG)..."
+	@CLI_BIN=$(BIN_CLI) bash -c 'set -euo pipefail; \
+		ROOT="$$(pwd)"; \
+		DIST="$$ROOT/dist/macos"; \
+		mkdir -p "$$DIST"; \
+		if [ ! -f packaging/macos/icon.icns ]; then scripts/package-macos.sh; exit 0; fi; \
+		swiftc -O -o "$$DIST/ClawdBot" -framework Cocoa -framework WebKit packaging/macos/main.swift; \
+		go run packaging/macos/stage.go -root "$$DIST/dmg" -bin $(BIN_CLI) -app-bin "$$DIST/ClawdBot" -icon packaging/macos/icon.icns -html packaging/macos/studio.html'
+
+dmg: build
+	@echo "🦞 Building studio DMG..."
+	@chmod +x scripts/package-macos.sh
+	CLI_BIN=$(BIN_CLI) ./scripts/package-macos.sh
+
+npm-pack: build
+	@echo "🦞 Packing npm clawdbot..."
+	@mkdir -p dist
+	@chmod +x scripts/package-npm.sh
+	CLI_BIN=$(BIN_CLI) ./scripts/package-npm.sh
+
+npm-publish: npm-pack
+	@echo "🦞 npm publish (dry-run always; live if logged in)..."
+	@chmod +x scripts/npm-publish.sh
+	./scripts/npm-publish.sh
 
 # ── All platforms ─────────────────────────────────────────────────────
 
@@ -262,6 +291,10 @@ help:
 	@echo "  ooda-tui    Run the OODA harness piped into its ANSI TUI"
 	@echo "  ooda-verify Type-check and smoke-run the OODA harness"
 	@echo "  scan-i2c    Scan for Modulino sensors"
+	@echo "  dmg         Build Clawd Bot.app + studio DMG"
+	@echo "  app         Stage Clawd Bot.app without wrapping a DMG"
+	@echo "  npm-pack    Vendor the CLI and npm pack clawdbot"
+	@echo "  npm-publish Dry-run (and live if npm login exists)"
 	@echo "  clean       Remove build artifacts"
 	@echo ""
 	@echo "  Version: $(VERSION) | Commit: $(COMMIT)"

@@ -154,10 +154,34 @@ After install:
 
 ```bash
 source ~/.clawdbot/.env
-clawdbot agent
+clawdbot version
+clawdbot agent -m "What is SOL price?"
 clawdbot ooda --sim
 clawdbot solana trending
 ```
+
+### npm (one command)
+
+```bash
+npm i -g clawdbot
+# or
+npx clawdbot version
+```
+
+`npx clawdbot` is the same Go CLI the repo builds. If the unscoped name is already taken on the public registry, the publishable fallback is `@clawd/clawdbot` — the binary name stays `clawdbot`.
+
+### macOS app (Grok-like DMG)
+
+Download **Clawd Bot.dmg**, open it, and drag **Clawd Bot** onto **Applications**. The mounted image is a studio installer window: the lobster-icon app on the left, Applications on the right.
+
+Build it locally:
+
+```bash
+make dmg
+open dist/macos/Clawd-Bot.dmg
+```
+
+Double-click **Clawd Bot** in Applications to open the desktop studio window (same idea as Grok Bot.app — a real `.app` with `Info.plist`, `MacOS` executable, and `icon.icns`).
 
 ### Manual Install
 

@@ -93,8 +93,10 @@ func NewClawdBotCommand() *cobra.Command {
 	short := fmt.Sprintf("%s Zero Clawd — Sovereign Solana Trading Intelligence v%s", "🦞", config.GetVersion())
 
 	cmd := &cobra.Command{
-		Use:   "clawdbot",
-		Short: short,
+		Use:           "clawdbot",
+		Short:         short,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		Long: `Zero Clawd — ultra-lightweight autonomous trading agent for Solana.
 Powered by the Zero Clawd runtime for NVIDIA Orin Nano-class edge hardware.
 
@@ -438,7 +440,8 @@ func NewAgentCommand() *cobra.Command {
 			}
 
 			if message != "" {
-				fmt.Printf("%s[CLAWDBOT]%s Processing: %s\n\n", colorGreen, colorReset, message)
+				fmt.Printf("%s[CLAWDBOT]%s Processing: %s\n", colorGreen, colorReset, message)
+				fmt.Printf("%sfree AI path: zkrouter %s%s\n\n", colorDim, config.ZkRouterBaseURL, colorReset)
 				a, err := newClawdAgent(cfg)
 				if err != nil {
 					return fmt.Errorf("agent init: %w", err)
@@ -449,8 +452,19 @@ func NewAgentCommand() *cobra.Command {
 				sp.Start()
 				answer, err := a.ProcessDirect(ctx, message)
 				sp.Stop()
+				if err != nil || strings.TrimSpace(answer) == "" {
+					if solana.LooksLikePriceQuery(message) {
+						if fallback, ferr := solana.LivePriceAnswer(message); ferr == nil {
+							answer = fallback
+							err = nil
+						}
+					}
+				}
 				if err != nil {
 					return fmt.Errorf("agent error: %w", err)
+				}
+				if strings.TrimSpace(answer) == "" {
+					return fmt.Errorf("agent error: empty reply from zkrouter")
 				}
 				fmt.Printf("%s[CLAWDBOT]%s %s\n", colorGreen, colorReset, answer)
 				return nil
@@ -1082,6 +1096,7 @@ func NewOODACommand() *cobra.Command {
 		hwBus    int
 		noHW     bool
 		simMode  bool
+		ticks    int
 	)
 
 	cmd := &cobra.Command{
@@ -1119,7 +1134,15 @@ TypeScript paper/devnet harness:
 				cfg.OODA.Mode = "simulated"
 			}
 
+			maxTicks := oodaPkg.ResolveTickCount(simMode, ticks, cmd.Flags().Changed("ticks"))
+
 			fmt.Printf("%s🔄 Zero Clawd OODA Loop%s\n", colorGreen, colorReset)
+			if simMode {
+				fmt.Printf("%ssimulated tick banner — paper/sim mode, no live trades%s\n", colorAmber, colorReset)
+			}
+			if maxTicks > 0 {
+				fmt.Printf("%sTicks: %d (one-shot)%s\n", colorDim, maxTicks, colorReset)
+			}
 			fmt.Printf("%sMode: %s | Interval: %ds | Watchlist: %d tokens%s\n",
 				colorDim, cfg.OODA.Mode, cfg.OODA.IntervalSeconds,
 				len(cfg.OODA.Watchlist), colorReset)
@@ -1167,6 +1190,14 @@ TypeScript paper/devnet harness:
 			}
 
 			// ── Start agent ────────────────────────────────────────────────
+			if maxTicks > 0 {
+				if err := ooda.RunTicks(maxTicks); err != nil {
+					return fmt.Errorf("agent ticks: %w", err)
+				}
+				printOODAStats(ooda)
+				return nil
+			}
+
 			if err := ooda.Start(); err != nil {
 				return fmt.Errorf("agent start: %w", err)
 			}
@@ -1179,14 +1210,7 @@ TypeScript paper/devnet harness:
 			fmt.Printf("\n%s[OODA] Signal %s — shutting down gracefully...%s\n",
 				colorAmber, sig, colorReset)
 			ooda.Stop()
-
-			stats := ooda.GetStats()
-			fmt.Printf("\n%s📊 Final Stats:%s\n", colorGreen, colorReset)
-			fmt.Printf("  Cycles:   %v\n", stats["cycles"])
-			fmt.Printf("  Trades:   %v closed\n", stats["closed_trades"])
-			fmt.Printf("  Win Rate: %.1f%%\n", stats["win_rate"])
-			fmt.Printf("  Avg PnL:  %.2f%%\n", stats["avg_pnl_pct"])
-
+			printOODAStats(ooda)
 			return nil
 		},
 	}
@@ -1195,6 +1219,7 @@ TypeScript paper/devnet harness:
 	cmd.Flags().IntVar(&hwBus, "hw-bus", 1, "I2C bus number for Modulino® hardware")
 	cmd.Flags().BoolVar(&noHW, "no-hw", false, "Disable hardware integration")
 	cmd.Flags().BoolVar(&simMode, "sim", false, "Force simulated mode (no live trades)")
+	cmd.Flags().IntVar(&ticks, "ticks", 0, "Number of cycles to run (0=forever). Default 1 with --sim")
 	cmd.AddCommand(
 		NewOODAHarnessCommand(),
 		NewOODAJournalCommand(),
@@ -1441,32 +1466,27 @@ func NewSolanaCommand() *cobra.Command {
 		},
 		&cobra.Command{
 			Use:   "trending",
-			Short: "Show trending Solana tokens (Birdeye)",
+			Short: "Show trending Solana tokens (Birdeye, Jupiter fallback)",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				cfg, err := config.Load()
 				if err != nil {
 					return fmt.Errorf("config error: %w", err)
 				}
-				if cfg.Solana.BirdeyeAPIKey == "" {
-					return fmt.Errorf("BIRDEYE_API_KEY not set")
-				}
-				client := solana.NewBirdeyeClient(cfg.Solana.BirdeyeAPIKey)
-
-				fmt.Printf("%s🌐 Trending Solana Tokens%s\n\n", colorGreen, colorReset)
-				tokens, err := client.GetTrendingV3(20)
+				jup := solana.NewJupiterClient(cfg.Solana.JupiterEndpoint, cfg.Solana.JupiterAPIKey)
+				rows, err := solana.FetchTrending(solana.TrendingRequest{
+					BirdeyeAPIKey: cfg.Solana.BirdeyeAPIKey,
+					Limit:         20,
+					Jupiter:       jup,
+				})
 				if err != nil {
-					return fmt.Errorf("birdeye trending: %w", err)
+					return fmt.Errorf("trending: %w", err)
 				}
-				for i, t := range tokens {
-					chgColor := colorGreen
-					if t.PriceChange24hPct < 0 {
-						chgColor = colorRed
-					}
-					fmt.Printf("  %2d. %s%-8s%s $%.6f  %s%+.2f%%%s  MCap: $%.0f  Vol: $%.0f\n",
-						i+1, colorTeal, t.Symbol, colorReset,
-						t.Price, chgColor, t.PriceChange24hPct, colorReset,
-						t.MarketCap, t.Volume24hUSD)
+				if len(rows) == 0 {
+					return fmt.Errorf("trending: no live rows")
 				}
+				fmt.Printf("%s🌐 Trending Solana Tokens%s  %s[%s]%s\n\n",
+					colorGreen, colorReset, colorDim, rows[0].Source, colorReset)
+				fmt.Print(solana.FormatTrending(rows))
 				return nil
 			},
 		},
@@ -2312,14 +2332,24 @@ func NewVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Show version info",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("clawdbot %s\n", config.FormatVersion())
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "clawdbot %s\n", config.FormatVersion())
 			buildTime, goVer := config.FormatBuildInfo()
 			if buildTime != "" {
-				fmt.Printf("built:  %s\n", buildTime)
+				fmt.Fprintf(out, "built:  %s\n", buildTime)
 			}
-			fmt.Printf("go:     %s\n", goVer)
+			fmt.Fprintf(out, "go:     %s\n", goVer)
 		},
 	}
+}
+
+func printOODAStats(ooda *agent.OODAAgent) {
+	stats := ooda.GetStats()
+	fmt.Printf("\n%s📊 Final Stats:%s\n", colorGreen, colorReset)
+	fmt.Printf("  Cycles:   %v\n", stats["cycles"])
+	fmt.Printf("  Trades:   %v closed\n", stats["closed_trades"])
+	fmt.Printf("  Win Rate: %.1f%%\n", stats["win_rate"])
+	fmt.Printf("  Avg PnL:  %.2f%%\n", stats["avg_pnl_pct"])
 }
 
 // ── Console hooks (AgentHooks → terminal output) ───────────────────────
