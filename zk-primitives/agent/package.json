@@ -81,6 +81,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@clawd/zk-client": "workspace:*",
+    "@metaplex-foundation/genesis": "^0.41.1",
+    "@metaplex-foundation/mpl-agent-registry": "^0.2.6",
+    "@metaplex-foundation/mpl-core": "^1.10.0",
+    "@metaplex-foundation/umi": "^1.5.1",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
     "@solana/kit": "^2.1.0",
     "@solana/web3.js": "^1.95.0"
   },
