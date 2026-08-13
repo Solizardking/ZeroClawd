@@ -41,11 +41,13 @@ agent/
 │   ├── intents.ts
 │   ├── cli.ts
 │   ├── tui.ts
-│   └── theme.ts
+│   ├── theme.ts
+│   └── tradeLoop.ts
 └── tests/
     ├── agent.test.ts
     ├── theme.test.ts
-    └── tui.test.ts
+    ├── tui.test.ts
+    └── tradeLoop.test.ts
 ```
 
 ## TUI
@@ -98,6 +100,33 @@ automatically when stdout isn't a TTY or `NO_COLOR` is set.
 `runTui()` and the `sharkTheme` namespace are also exported from the
 package root for anyone embedding the same menu elsewhere.
 
+## Trade Loop (paper, any token)
+
+Menu option `8` (or `zk-shark-agent trade-loop`) lets the shark launch a
+**paper-trading** OODA loop for whatever token you name — it spawns the
+sibling `ooda/loop.ts` harness (see `ooda/README.md`) and streams every
+tick back into the TUI, shark-flavored:
+
+```bash
+zk-shark-agent trade-loop --token BONK --ticks 100 --sleep 0.25
+zk-shark-agent trade-loop --token WIF --ticks 50 --llm     # LLM-routed decisions
+zk-shark-agent trade-loop --token PEPE --goblin            # GOBLIN MODE
+```
+
+This is a thin bridge, not a second trading engine — `ooda/loop.ts`
+enforces its own safety contract entirely on its own (paper mode +
+devnet only, mainnet RPCs rejected, position-size caps, a kill-switch),
+and this module cannot weaken any of it. The `--token` you pick only
+labels the run (journal entries, the LLM prompt, the default perps-OI
+symbol); the price feed is the harness's seeded synthetic generator,
+not a live market feed — see `ooda/README.md` for the full contract and
+how to wire in a real price adapter.
+
+Requires running from inside the go-bot monorepo (`ooda/` must sit next
+to `zk-primitives/`); `resolveOodaDir()` throws a clear error otherwise.
+`runTradeLoop`, `buildLoopArgs`, and `resolveOodaDir` are exported from
+the package root for programmatic use.
+
 ## CLI
 
 ```bash
@@ -109,6 +138,7 @@ zk-shark-agent commit <ciphertextCommitment> <stateVersion> <proof.json> \
 zk-shark-agent verify <proof.json>
 zk-shark-agent nullifier "model-attest:v1:my-model"
 zk-shark-agent ask "attest this model 0xab12... with my proof"
+zk-shark-agent trade-loop --token BONK --ticks 100 --sleep 0.25
 ```
 
 The package also exposes `shark-of-all-streets` as a command alias.

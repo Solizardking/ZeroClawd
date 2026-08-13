@@ -67,6 +67,7 @@ The orchestrator. Runs the OODA cycle for N ticks:
 
 | Flag | Default | Description |
 | --- | --- | --- |
+| `--token SYM` | `SOL` | Label the run for this token (journal, prompt, TUI). Price feed stays synthetic — see note below. |
 | `--ticks N` | 50 | Number of ticks to run |
 | `--sleep N` | 0.25 | Seconds between ticks |
 | `--seed N` | 42 | PRNG seed for synth candles |
@@ -84,7 +85,7 @@ The orchestrator. Runs the OODA cycle for N ticks:
 
 ### `observe.ts` — Market Data
 
-- **`SynthObserver`** — seeded deterministic candle generator using `mulberry32` PRNG. Produces OHLCV candles with a slight upward drift. Used by default.
+- **`SynthObserver`** — seeded deterministic candle generator using `mulberry32` PRNG. Produces OHLCV candles with a slight upward drift. Used by default, regardless of `--token` — the token flag only labels the run (journal entries, TUI header, the LLM prompt, and the default `--perps-symbol` of `<TOKEN>-PERP`). Wire `observeFromHelius()` to get a token-specific live feed.
 - **`observeFromHelius()`** — stub for a real Pyth/Helius RPC adapter. Falls back to synth until wired.
 - **`rejectMainnet(rpcUrl)`** — hard guard; throws on any mainnet RPC URL (bypassed only with `MAINNET_OK=1`).
 - **`isStale(candles)`** — staleness check; returns `true` if the last candle is older than `maxAgeSeconds`.
