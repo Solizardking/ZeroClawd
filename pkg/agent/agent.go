@@ -311,6 +311,9 @@ func (a *ClawdAgent) ProcessDirect(ctx context.Context, query string) (string, e
 			logger.DebugCF("agent", fmt.Sprintf("Thinking: %s", truncateAgentStr(ev.Message, 80)), nil)
 		}
 	}
+	if strings.HasPrefix(answer, "Error:") {
+		return "", fmt.Errorf("%s", strings.TrimSpace(strings.TrimPrefix(answer, "Error:")))
+	}
 	return answer, nil
 }
 

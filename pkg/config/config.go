@@ -234,22 +234,22 @@ type GodModeConfig struct {
 // ── ClawdBot: OODA Loop ──────────────────────────────────────────────
 
 type OODAConfig struct {
-	Enabled          bool     `json:"enabled"`
-	IntervalSeconds  int      `json:"interval_seconds"`
-	Mode             string   `json:"mode"` // "live", "simulated", "backtest"
-	Watchlist        []string `json:"watchlist"`
-	MinSignalStr     float64  `json:"min_signal_strength"`
-	MinConfidence    float64  `json:"min_confidence"`
-	MaxPositions     int      `json:"max_positions"`
-	StopLossPct      float64  `json:"stop_loss_pct"`
-	TakeProfitPct    float64  `json:"take_profit_pct"`
-	PositionSizePct  float64  `json:"position_size_pct"`
+	Enabled         bool     `json:"enabled"`
+	IntervalSeconds int      `json:"interval_seconds"`
+	Mode            string   `json:"mode"` // "live", "simulated", "backtest"
+	Watchlist       []string `json:"watchlist"`
+	MinSignalStr    float64  `json:"min_signal_strength"`
+	MinConfidence   float64  `json:"min_confidence"`
+	MaxPositions    int      `json:"max_positions"`
+	StopLossPct     float64  `json:"stop_loss_pct"`
+	TakeProfitPct   float64  `json:"take_profit_pct"`
+	PositionSizePct float64  `json:"position_size_pct"`
 	// RiskPerTradePct is the fraction of equity risked if a trade's stop is hit.
 	// When > 0 the OODA loop sizes positions by risk (size scales inversely with
 	// stop distance); when 0 it falls back to fixed-fraction sizing.
-	RiskPerTradePct  float64  `json:"risk_per_trade_pct"`
-	LearnIntervalMin int      `json:"learn_interval_min"`
-	AutoOptimize     bool     `json:"auto_optimize"`
+	RiskPerTradePct  float64 `json:"risk_per_trade_pct"`
+	LearnIntervalMin int     `json:"learn_interval_min"`
+	AutoOptimize     bool    `json:"auto_optimize"`
 }
 
 // ── ClawdBot: Supabase ────────────────────────────────────────────────
@@ -343,7 +343,9 @@ func DefaultConfig() *Config {
 			TimeoutSeconds:  600,
 		},
 		GodMode: GodModeConfig{
-			Enabled:       true,
+			// Off by default so a key-less install uses the free zkrouter
+			// path instead of racing paid OpenRouter candidates.
+			Enabled:       false,
 			RaceLimit:     5,
 			SamplingBoost: true,
 			Feedback:      true,

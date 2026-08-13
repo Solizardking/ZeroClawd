@@ -452,9 +452,10 @@ func NewAgentCommand() *cobra.Command {
 				sp.Start()
 				answer, err := a.ProcessDirect(ctx, message)
 				sp.Stop()
-				if err != nil || strings.TrimSpace(answer) == "" {
+				if err != nil || strings.TrimSpace(answer) == "" || strings.Contains(strings.ToLower(answer), "authentication_error") {
 					if solana.LooksLikePriceQuery(message) {
 						if fallback, ferr := solana.LivePriceAnswer(message); ferr == nil {
+							fmt.Printf("%s[CLAWDBOT]%s zkrouter unavailable — using live Jupiter price\n", colorAmber, colorReset)
 							answer = fallback
 							err = nil
 						}
