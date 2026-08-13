@@ -39,10 +39,64 @@ agent/
 │   ├── agent.ts
 │   ├── config.ts
 │   ├── intents.ts
-│   └── cli.ts
+│   ├── cli.ts
+│   ├── tui.ts
+│   └── theme.ts
 └── tests/
-    └── agent.test.ts
+    ├── agent.test.ts
+    ├── theme.test.ts
+    └── tui.test.ts
 ```
+
+## TUI
+
+Run the binary with no arguments in a terminal (or `zk-shark-agent tui`
+explicitly) to launch an interactive, shark-themed menu over the same
+operations the CLI exposes — no need to remember flags or hex encode
+things by hand:
+
+```bash
+zk-shark-agent
+# or
+zk-shark-agent tui
+```
+
+```text
+                    .
+                   /|
+                  / |
+                 /  |
+      __________/   |____________________________________________
+~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
+
+                        Z K   S H A R K
+                🦈  the Shark of All Streets  🦈
+     nullifiers · Groth16 proofs · Light Protocol attestations
+
+~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
+
+  1) 🌊 Inspect configuration
+  2) 🦈 Attest a model
+  3) 🔐 Commit encrypted state
+  4) ✅ Verify a proof
+  5) #️⃣  Compute a nullifier
+  6) 💬 Ask the shark (natural language)
+  7) ❓ Help
+  q) 🚪 Swim away (quit)
+```
+
+Each menu item walks you through the required inputs (prompting and
+re-prompting on malformed hex), shows a shark-cruising spinner while an
+operation is in flight, and prints the result in a bordered box. Errors
+surface as a "🦈💢 blood in the water" box instead of a raw stack trace.
+
+The TUI is built entirely on Node's own `readline/promises` and ANSI
+escape codes (see `src/theme.ts`) — no `ink`/`blessed`/`chalk` — so the
+package keeps its zero-extra-dependency footprint. Colors are skipped
+automatically when stdout isn't a TTY or `NO_COLOR` is set.
+
+`runTui()` and the `sharkTheme` namespace are also exported from the
+package root for anyone embedding the same menu elsewhere.
 
 ## CLI
 

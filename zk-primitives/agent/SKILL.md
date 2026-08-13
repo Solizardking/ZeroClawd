@@ -95,6 +95,10 @@ zk-shark-agent ask     "natural language"
 `shark-of-all-streets` is also available as a binary alias. The legacy
 `clawd-zk-agent` binary remains available for older scripts.
 
+Running the binary with no arguments in a terminal (or `zk-shark-agent
+tui` explicitly) launches an interactive, shark-themed TUI menu that
+wraps the same operations for humans — see `README.md` for details.
+
 The proof JSON shape is:
 
 ```json

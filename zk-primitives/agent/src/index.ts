@@ -40,6 +40,8 @@ export {
 export { routeIntent, type IntentRoute, type IntentContext, KNOWN_INTENTS } from "./intents.js";
 export { loadAgentConfig, type ZkSharkAgentConfig, type ZkAgentConfig, DEFAULT_PROGRAM_ID } from "./config.js";
 export { runCli } from "./cli.js";
+export { runTui } from "./tui.js";
+export * as sharkTheme from "./theme.js";
 export {
   // Re-export the lower-level SDK so callers can drop down when they
   // need to construct instructions by hand.

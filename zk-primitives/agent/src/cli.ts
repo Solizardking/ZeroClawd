@@ -25,6 +25,10 @@
  *     Use the deterministic intent router to map the text to an action,
  *     then dispatch it.
  *
+ *   zk-shark-agent tui
+ *     Launch the interactive, shark-themed terminal UI. This is also
+ *     what runs when the binary is invoked with no arguments in a TTY.
+ *
  *   zk-shark-agent help
  *     Print this help.
  */
@@ -59,6 +63,10 @@ function printUsage(): void {
   ask "<natural language>"
       Use the intent router to map free-form text to an action.
 
+  tui
+      Launch the interactive, shark-themed terminal UI. This also runs
+      automatically when the binary is invoked with no arguments in a TTY.
+
   help
       Print this help.
 
@@ -90,6 +98,13 @@ function parseHex32(label: string, hex: string): Uint8Array {
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
+
+  if (argv.length === 0 && process.stdin.isTTY && process.stdout.isTTY) {
+    const { runTui } = await import("./tui.js");
+    process.exitCode = await runTui();
+    return;
+  }
+
   if (argv.length === 0 || argv[0] === "help" || argv[0] === "--help" || argv[0] === "-h") {
     printUsage();
     return;
@@ -97,6 +112,12 @@ async function main(): Promise<void> {
 
   const sub = argv[0];
   const tail = argv.slice(1);
+
+  if (sub === "tui") {
+    const { runTui } = await import("./tui.js");
+    process.exitCode = await runTui();
+    return;
+  }
 
   if (sub === "inspect") {
     const agent = await ZkSharkAgent.fromEnv();
