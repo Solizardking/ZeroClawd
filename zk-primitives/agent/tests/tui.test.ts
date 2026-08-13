@@ -174,6 +174,26 @@ describe("runTui", () => {
     expect(text).toContain("TEST");
   });
 
+  test("checks the $CLAWD gate through the mocked bridge", async () => {
+    const term = new FakeTerminal();
+    const runPromise = runTui({ input: term.input, output: term.output });
+
+    await term.type("9"); // $CLAWD gate
+    await term.type("SomeWalletAddress111"); // wallet
+    await term.type(""); // press enter to continue
+    await term.type("q");
+    term.end();
+
+    const code = await runPromise;
+    const text = term.text();
+
+    expect(code).toBe(0);
+    expect(checkClawdGateMock).toHaveBeenCalledWith("SomeWalletAddress111");
+    expect(text).toContain("$CLAWD gate");
+    expect(text).toContain("treasury-sponsored mint");
+    expect(text).toContain("8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump");
+  });
+
   test("exits with code 1 and a friendly error when config is missing", async () => {
     process.env = { ...ORIGINAL_ENV };
     delete process.env.ZK_SHARK_RPC_URL;

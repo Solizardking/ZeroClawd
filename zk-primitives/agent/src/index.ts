@@ -52,6 +52,31 @@ export {
   type TradeLoopResult,
 } from "./tradeLoop.js";
 export {
+  CLAWD_MINT,
+  checkClawdGate,
+  getClawdBalanceOnchain,
+  type ClawdGateResult,
+  type ClawdOnchainBalance,
+} from "./clawdToken.js";
+export {
+  mintAgentIdentity,
+  buildMintAgentInput,
+  toAgentMetadata,
+  type AgentRegistrationDoc,
+  type MintAgentIdentityOptions,
+  type MintAgentIdentityPreview,
+  type MintAgentIdentityResult,
+} from "./metaplexAgentIdentity.js";
+export {
+  launchAgentToken,
+  buildLaunchInput,
+  validateTokenMetadata,
+  type LaunchAgentTokenOptions,
+  type LaunchAgentTokenPreview,
+  type LaunchAgentTokenResult,
+} from "./genesisAgentToken.js";
+export { buildUmi } from "./umi.js";
+export {
   // Re-export the lower-level SDK so callers can drop down when they
   // need to construct instructions by hand.
   computeNullifier,

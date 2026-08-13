@@ -39,6 +39,18 @@
     "./tradeLoop": {
       "import": "./dist/tradeLoop.js",
       "types": "./dist/tradeLoop.d.ts"
+    },
+    "./clawdToken": {
+      "import": "./dist/clawdToken.js",
+      "types": "./dist/clawdToken.d.ts"
+    },
+    "./metaplexAgentIdentity": {
+      "import": "./dist/metaplexAgentIdentity.js",
+      "types": "./dist/metaplexAgentIdentity.d.ts"
+    },
+    "./genesisAgentToken": {
+      "import": "./dist/genesisAgentToken.js",
+      "types": "./dist/genesisAgentToken.d.ts"
     }
   },
   "files": [
@@ -76,7 +88,15 @@
     "shark-tui",
     "trade-loop",
     "ooda",
-    "paper-trading"
+    "paper-trading",
+    "metaplex",
+    "metaplex-agent",
+    "genesis",
+    "agent-token",
+    "agent-identity",
+    "mpl-core",
+    "clawd",
+    "pump.fun"
   ],
   "license": "Apache-2.0",
   "dependencies": {

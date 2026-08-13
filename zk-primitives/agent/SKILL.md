@@ -9,6 +9,8 @@ when_to_use: |
     - "verify this Groth16 proof against the publish inputs"
     - "derive a nullifier for context foo"
     - "show me the ZK Shark config" / "inspect the zk shark agent"
+    - "mint/register a Metaplex agent identity" / "check the $CLAWD gate"
+    - "launch an agent token on Solana" / "launch a Genesis bonding-curve token"
   Do not use it for on-chain trading, voice calls, or generic Solana RPC queries.
 inputs:
   - modelHash            (optional, hex) - 32-byte model hash for attest intents
@@ -33,6 +35,7 @@ env:
     - ZK_SHARK_COMMITMENT
     - ZK_SHARK_KEYPAIR
     - ZK_SHARK_NETWORK
+    - ZK_SHARK_METAPLEX_AGENTS_API
 ---
 
 # ZK Shark Agent
@@ -106,6 +109,25 @@ safety enforcement (paper mode, devnet only, position caps, kill-switch)
 lives entirely in `ooda/`, unchanged by this agent. Requires running
 from inside the go-bot monorepo.
 
+### Metaplex agent identity + token (real onchain actions)
+
+- `zk-shark-agent clawd-gate [wallet]` (menu `9`) — read-only check of
+  whether a wallet qualifies for treasury-sponsored free agent minting
+  by its $CLAWD balance (mint `8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump`
+  on pump.fun). No transaction, no cost.
+- `zk-shark-agent register-agent <doc.json> --uri <url>` (menu `10`) —
+  mints a Metaplex Core NFT agent identity via
+  `@metaplex-foundation/mpl-agent-registry`'s `mintAndSubmitAgent`.
+- `zk-shark-agent launch-token --asset <addr> --name X --symbol Y --image <irysUrl>`
+  (menu `11`) — launches a bonding-curve token bound to that identity
+  via `@metaplex-foundation/genesis`'s `createAndRegisterLaunch`.
+
+**Both mutating commands default to a devnet dry run and require an
+explicit `--confirm` (or an explicit "yes" in the TUI) to actually send
+a transaction.** `--set-token` is permanent — one token per agent,
+forever — and defaults to off. Never invoke these with `--confirm`
+against mainnet without the operator's explicit, informed go-ahead.
+
 The proof JSON shape is:
 
 ```json
@@ -143,6 +165,12 @@ also accepted.
 - `proof.a must be 64 bytes` - the proof JSON is malformed; re-export
   from the prover.
 - `Secret must be at least 16 bytes` - supply a real nullifier secret.
+- `mintAgentIdentity requires a signer` / `launchAgentToken requires a
+  signer` - set `ZK_SHARK_KEYPAIR` to a funded Solana keypair JSON.
+- `Token image must be an Irys URL` - upload the token image to Irys
+  first; only `https://gateway.irys.xyz/...` URLs pass Genesis validation.
+- `Genesis validation error on "<field>"` / `Genesis API error (<code>)`
+  - typed errors surfaced verbatim from `@metaplex-foundation/genesis`.
 
 ## Cross-References
 
@@ -150,3 +178,6 @@ also accepted.
 - Anchor program: `zk-primitives/programs/clawd-zk/`
 - Architecture notes: `zk-primitives/docs/ARCHITECTURE.md`
 - Agent catalog: `AGENTS.md`
+- Paper-trading harness: `ooda/README.md`
+- Token launch SDK: `@metaplex-foundation/genesis`
+- Agent identity SDK: `@metaplex-foundation/mpl-agent-registry`
