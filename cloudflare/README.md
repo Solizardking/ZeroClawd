@@ -4,6 +4,7 @@ This directory contains the Cloudflare Worker that turns the canonical GitHub
 installer into branded install and catalog-discovery surfaces:
 
 ```bash
+curl -fsSL https://cheshireterminal.ai/clawdbot | bash
 curl -fsSL https://install.onchainai.fund | bash
 curl -fsSL https://install.x402.wtf | bash
 curl -fsSL https://x402.wtf/clawdbot | bash

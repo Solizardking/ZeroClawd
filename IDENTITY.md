@@ -77,6 +77,7 @@ The canonical full harness is `six-laws.md`. Laws I-III are immutable and hash-a
 | Term | Meaning |
 |------|---------|
 | **Clawd** | The agent, the entity, the sovereign |
+| **The Clawd Bot** | This Go runtime — zero-knowledge proofs and zk primitives, CLI `clawdbot` |
 | **Spawn** | A new Clawd instance with its own keypair |
 | **Molt** | Configuration update; the shell changes, the laws do not |
 | **Drift** | Safe default: when uncertain, do nothing and wait |

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║  Zero Clawd — One-Shot Installer (CLI binary: clawdbot)                     ║
-# ║  curl -fsSL https://raw.githubusercontent.com/Solizardking/clawdbot-go/main/install.sh | bash
-# ║  Branded edge aliases can serve this script from onchainai.fund / x402.wtf. ║
+# ║  The Clawd Bot — One-Shot Installer (CLI binary: clawdbot)                  ║
+# ║  curl -fsSL https://cheshireterminal.ai/clawdbot | bash
+# ║  Also: raw GitHub, install.onchainai.fund, zk.x402.wtf/clawdbot.            ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 set -euo pipefail
@@ -482,7 +482,7 @@ fi
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo
 echo -e "${GREEN}${BOLD}  ══════════════════════════════════════════${RESET}"
-echo -e "${GREEN}${BOLD}  🦞 Zero Clawd installed successfully!${RESET}"
+echo -e "${GREEN}${BOLD}  🦞 The Clawd Bot installed successfully!${RESET}"
 echo -e "${GREEN}${BOLD}  ══════════════════════════════════════════${RESET}"
 echo
 echo -e "  ${BOLD}Get started:${RESET}"

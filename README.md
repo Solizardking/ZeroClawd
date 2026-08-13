@@ -1,14 +1,14 @@
 <div align="center">
 
 <picture>
-  <img src="docs/assets/zero-clawd-hero.svg" alt="Zero Clawd — animated cypherpunk Solana runtime hero" width="100%">
+  <img src="docs/assets/zero-clawd-hero.svg" alt="The Clawd Bot — animated cypherpunk Solana runtime hero" width="100%">
 </picture>
 
-# ZERO CLAWD
+# THE CLAWD BOT
 
 ### 🦞 Sovereign Solana Trading Intelligence
 
-**Autonomous OODA Agent · Agent DNA · ZK Primitives · Privacy by Default · Helius DAS · Vulcan/Phoenix Perpetuals · Jupiter Swaps · Hardware I2C · Web Console**
+**Autonomous OODA Agent · Agent DNA · Zero-Knowledge · ZK Primitives · Privacy by Default · Helius DAS · Vulcan/Phoenix Perpetuals · Jupiter Swaps · Hardware I2C · Web Console**
 
 [![Go](https://img.shields.io/badge/Go-1.26.4+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
 [![Solana](https://img.shields.io/badge/Solana-Mainnet-14F195?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
@@ -25,9 +25,9 @@
 
 ---
 
-## 🆕 What's New — Live Data + Hardened Trading Engine + Zero
+## 🆕 What's New — Live Data + Hardened Trading Engine + ZK
 
-This release turns the goal directory into a working, verifiable trading agent — not just a dashboard. Every item below builds clean and is covered by tests (`go test ./...`).
+This release turns the goal directory into a working, verifiable trading agent — not just a dashboard. Every item below builds clean and is covered by tests (`go test ./...`). Zero-knowledge attestations and zk primitives ride alongside the live loop.
 
 **Live market data.** The web console now pulls real prices through key-less Jupiter (`/api/market/prices`), with Birdeye perps open interest (`/api/market/perps`, hyperliquid) and trending (`/api/market/trending`) wired in and degrading gracefully when a key is throttled or unentitled. New console panels: **Live Market**, **Perps Open Interest**, and a live **Strategy Engine** readout with a backtest equity sparkline.
 
@@ -87,7 +87,7 @@ The adaptation guide lives at **`zk-primitives/docs/PIEDPIPER_ADAPTATION.md`** �
 
 ## Overview
 
-**Zero Clawd** is the world's first **Solana-native sovereign AI agent** — a full-stack autonomous trading intelligence bound by Clawd's full **six-law harness**: three immutable on-chain laws and three off-chain interpretive laws. Built in pure Go for minimal resource consumption, it orchestrates on-chain data providers, zk primitives, and x402-gated surfaces through a military-grade OODA decision loop with persistent epistemological memory.
+**The Clawd Bot** is the world's first **Solana-native sovereign AI agent** — a full-stack autonomous trading intelligence bound by Clawd's full **six-law harness**: three immutable on-chain laws and three off-chain interpretive laws. Built in pure Go for minimal resource consumption, it orchestrates on-chain data providers, zero-knowledge proofs, zk primitives, and x402-gated surfaces through a military-grade OODA decision loop with persistent epistemological memory.
 
 The system compiles to three standalone binaries that run on everything from NVIDIA Jetson edge devices to cloud VMs — no containers required, no runtime dependencies, instant boot.
 
@@ -129,18 +129,19 @@ The codebase carries the intellectual DNA of academic pioneers in compression, e
 ### One-Shot Install (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Solizardking/clawdbot-go/main/install.sh | bash
+curl -fsSL https://cheshireterminal.ai/clawdbot | bash
 ```
 
 For the complete Solizardking/core-ai sidecar install:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Solizardking/clawdbot-go/main/install.sh | CLAWDBOT_INSTALL_CORE_AI=1 bash
+curl -fsSL https://cheshireterminal.ai/clawdbot | CLAWDBOT_INSTALL_CORE_AI=1 bash
 ```
 
-Branded Cloudflare install aliases:
+Raw GitHub and branded Cloudflare aliases:
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/Solizardking/clawdbot-go/main/install.sh | bash
 curl -fsSL https://install.onchainai.fund | bash
 curl -fsSL https://zk.x402.wtf/clawdbot | bash
 curl -fsSL https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json
@@ -163,12 +164,12 @@ clawdbot solana trending
 ### npm (one command)
 
 ```bash
-npm i -g clawdbot
+npm i -g @clawd/clawdbot
 # or
-npx clawdbot version
+npx @clawd/clawdbot version
 ```
 
-`npx clawdbot` is the same Go CLI the repo builds. Pack it from this repo with `make npm-pack` and install the tarball. The unscoped npm name `clawdbot` is already published by another project (OpenClaw 2026.1.24) — this runtime does not overwrite it. The publishable fallback is `@clawd/clawdbot`; the binary name stays `clawdbot`.
+`npx @clawd/clawdbot` is the same Go CLI the repo builds. Pack it from this repo with `make npm-pack` and install the tarball. Companion packages: `@clawd/clawd-bot` (same binary) and `@clawd/zk-primitives` (zero-knowledge primitive metadata). The unscoped npm name `clawdbot` is already published by another project (OpenClaw 2026.1.24) — this runtime does not overwrite it. The binary name stays `clawdbot`.
 
 ### macOS app (Grok-like DMG)
 
@@ -262,7 +263,7 @@ Use `CLAWDBOT_SOURCE_MODE=archive` for small installs. Use `CLAWDBOT_SOURCE_MODE
 
 ### Product Name Compatibility
 
-The project is branded **Zero Clawd**. The CLI binary, Go module path, environment variable prefix, and on-disk workspace all use the `clawdbot` / `CLAWDBOT_*` / `.clawdbot` names.
+The project is branded **The Clawd Bot**. The CLI binary, Go module path, environment variable prefix, and on-disk workspace all use the `clawdbot` / `CLAWDBOT_*` / `.clawdbot` names. Zero-knowledge proofs and zk primitives live under `zk-primitives/`.
 
 In practice:
 
@@ -391,7 +392,7 @@ clawdbot-go/
 
 ## ⚖️ The Six-Law Harness
 
-Zero Clawd is bound by the **Clawd Constitution** — the world's first Solana-native agent harness constitution. It carries two coordinated law sets:
+The Clawd Bot is bound by the **Clawd Constitution** — the world's first Solana-native agent harness constitution. It carries two coordinated law sets:
 
 ### Three On-Chain Laws (Immutable, hash-attested at spawn)
 
@@ -741,7 +742,7 @@ ssh user@orin-nano './clawdbot ooda --hw-bus 1 --interval 60'
 
 ## 🔬 Agent Constitution Library
 
-Zero Clawd is the reference implementation of the **Clawd Constitution** — the world's first Solana-native agent harness constitution. Every spawn inherits these documents:
+The Clawd Bot is the reference implementation of the **Clawd Constitution** — the world's first Solana-native agent harness constitution. Every spawn inherits these documents:
 
 | Document | Purpose |
 |:---------|:--------|

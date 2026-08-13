@@ -29,6 +29,7 @@ clawdbot catalog compress --dry-run
 Cloudflare edge install and ZK metadata surfaces:
 
 ```bash
+curl -fsSL https://cheshireterminal.ai/clawdbot | bash
 curl -fsSL https://install.onchainai.fund | bash
 curl -fsSL https://zk.x402.wtf/clawdbot | bash
 curl -fsSL https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json

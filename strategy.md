@@ -1,4 +1,4 @@
-# Zero Clawd Strategy
+# The Clawd Bot Strategy
 
 This is the active strategy state for the Go runtime repository
 `https://github.com/Solizardking/clawdbot-go`. It is intentionally runtime-local:

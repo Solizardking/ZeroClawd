@@ -1,0 +1,40 @@
+{
+  "name": "@clawd/zk-primitives",
+  "version": "1.0.0",
+  "description": "The Clawd Bot zero-knowledge primitive catalog — nullifiers, Groth16, Light Protocol compressed state",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Solizardking/clawdbot-go.git",
+    "directory": "zk-primitives"
+  },
+  "homepage": "https://github.com/Solizardking/clawdbot-go/tree/main/zk-primitives",
+  "bugs": {
+    "url": "https://github.com/Solizardking/clawdbot-go/issues"
+  },
+  "keywords": [
+    "clawd",
+    "clawd-bot",
+    "zero-knowledge",
+    "zk-primitives",
+    "groth16",
+    "nullifier",
+    "solana",
+    "light-protocol"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

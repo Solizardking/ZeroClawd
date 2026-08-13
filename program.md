@@ -1,4 +1,4 @@
-# Zero Clawd Research Program v1.0
+# The Clawd Bot Research Program v1.0
 
 This file governs the strategy-research loop for the Go runtime in
 `https://github.com/Solizardking/clawdbot-go`. Public discovery for the wider

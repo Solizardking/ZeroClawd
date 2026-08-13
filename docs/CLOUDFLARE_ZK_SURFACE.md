@@ -47,6 +47,7 @@ and the Go runtime catalog.
 | `https://install.onchainai.fund/install.sh` | Raw installer proxy |
 | `https://install.onchainai.fund/.well-known/clawdbot-install.json` | Combined installer metadata |
 | `https://install.onchainai.fund/.well-known/clawdbot-zk.json` | ZK primitive metadata |
+| `https://cheshireterminal.ai/clawdbot` | One-shot install (`curl -fsSL … \| bash`) |
 | `https://zk.x402.wtf/clawdbot` | Complete install wrapper under `/clawdbot` |
 | `https://zk.x402.wtf/clawdbot/.well-known/clawdbot-zk.json` | ZK primitive metadata under `/clawdbot` |
 

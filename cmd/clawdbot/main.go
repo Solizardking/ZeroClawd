@@ -1,4 +1,4 @@
-// Zero Clawd — Sovereign Solana Trading Intelligence
+// The Clawd Bot — Sovereign Solana Trading Intelligence
 // Optimized for lightweight edge deployment on NVIDIA Orin Nano-class hardware.
 // Public runtime repo: see pkg/config.RuntimeRepoURL
 // Public ecosystem hub: see pkg/config.HubRepoURL
@@ -90,22 +90,22 @@ const (
 )
 
 func NewClawdBotCommand() *cobra.Command {
-	short := fmt.Sprintf("%s Zero Clawd — Sovereign Solana Trading Intelligence v%s", "🦞", config.GetVersion())
+	short := fmt.Sprintf("%s The Clawd Bot — Sovereign Solana Trading Intelligence v%s", "🦞", config.GetVersion())
 
 	cmd := &cobra.Command{
 		Use:           "clawdbot",
 		Short:         short,
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Long: `Zero Clawd — ultra-lightweight autonomous trading agent for Solana.
-Powered by the Zero Clawd runtime for NVIDIA Orin Nano-class edge hardware.
+		Long: `The Clawd Bot — ultra-lightweight autonomous trading agent for Solana.
+Powered by The Clawd Bot runtime for NVIDIA Orin Nano-class edge hardware.
 
 Features:
   • OODA Loop (Observe → Orient → Decide → Act)
   • ClawVault persistent memory (known/learned/inferred)
   • Six-law trading harness (3 on-chain + 3 off-chain)
   • Trading cockpit, risk gate, doctor, and performance bench
-  • Zero Clawd Strategy: RSI + EMA cross + ATR signal engine
+  • The Clawd Bot Strategy: RSI + EMA cross + ATR signal engine
   • Solana: Jupiter swaps, Birdeye analytics, Helius RPC, Vulcan/Phoenix perps
   • Arduino Modulino® I2C: LEDs, buzzer, buttons, knob, sensors
   • Dexter deep research agent
@@ -218,7 +218,7 @@ func NewSpinnerCommand() *cobra.Command {
 
 	set := &cobra.Command{
 		Use:   "set <pack>",
-		Short: "Set the default spinner pack in the Zero Clawd config",
+		Short: "Set the default spinner pack in The Clawd Bot config",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pack := args[0]
@@ -257,7 +257,7 @@ func NewDoctorCommand() *cobra.Command {
 	var fail bool
 	cmd := &cobra.Command{
 		Use:   "doctor",
-		Short: "Run local Zero Clawd runtime and trading diagnostics",
+		Short: "Run local Clawd Bot runtime and trading diagnostics",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
@@ -301,7 +301,7 @@ func NewBenchCommand() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "bench",
-		Short: "Run a fast Zero-style Zero Clawd startup benchmark",
+		Short: "Run a fast Zero-style Clawd Bot startup benchmark",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSec)*time.Second)
 			defer cancel()
@@ -388,7 +388,7 @@ func newTradeRiskCommand() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "risk [symbol]",
-		Short: "Score a token against Zero Clawd trading risk gates",
+		Short: "Score a token against The Clawd Bot trading risk gates",
 		Args:  cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 && symbol == "" {
@@ -432,7 +432,7 @@ func NewAgentCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "agent",
-		Short: "Chat with Zero Clawd agent",
+		Short: "Chat with The Clawd Bot agent",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
@@ -473,7 +473,7 @@ func NewAgentCommand() *cobra.Command {
 
 			// Interactive REPL mode
 			fmt.Print(lobster)
-			fmt.Printf("%s🦞 Zero Clawd Interactive Mode%s\n", colorGreen, colorReset)
+			fmt.Printf("%s🦞 The Clawd Bot Interactive Mode%s\n", colorGreen, colorReset)
 			fmt.Printf("%sModel: %s | Workspace: %s%s\n", colorDim, cfg.Agents.Defaults.ModelName, cfg.Agents.Defaults.Workspace, colorReset)
 			fmt.Printf("%sType your message or use memory commands (!remember, !recall, !trades, !lessons)%s\n\n", colorDim, colorReset)
 
@@ -490,13 +490,13 @@ func NewAgentCommand() *cobra.Command {
 func NewGatewayCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "gateway",
-		Short: "Start Zero Clawd gateway (Telegram, Discord, WebSocket)",
+		Short: "Start The Clawd Bot gateway (Telegram, Discord, WebSocket)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
 				return fmt.Errorf("config error: %w", err)
 			}
-			fmt.Printf("%s🦞 Zero Clawd Gateway starting...%s\n", colorGreen, colorReset)
+			fmt.Printf("%s🦞 The Clawd Bot Gateway starting...%s\n", colorGreen, colorReset)
 			fmt.Printf("%sHost: %s:%d%s\n", colorDim, cfg.Gateway.Host, cfg.Gateway.Port, colorReset)
 
 			// Print enabled channels
@@ -571,10 +571,10 @@ func runGatewayRuntime(cfg *config.Config) error {
 func NewOnboardCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "onboard",
-		Short: "Initialize Zero Clawd config & workspace",
+		Short: "Initialize The Clawd Bot config & workspace",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Print(lobster)
-			fmt.Printf("%s🦞 Welcome to Zero Clawd!%s\n\n", colorGreen, colorReset)
+			fmt.Printf("%s🦞 Welcome to The Clawd Bot!%s\n\n", colorGreen, colorReset)
 
 			configPath := config.DefaultConfigPath()
 			workspacePath := config.DefaultWorkspacePath()
@@ -588,7 +588,7 @@ func NewOnboardCommand() *cobra.Command {
 				return fmt.Errorf("onboard failed: %w", err)
 			}
 
-			fmt.Printf("\n%s✓ Zero Clawd initialized!%s\n", colorGreen, colorReset)
+			fmt.Printf("\n%s✓ The Clawd Bot initialized!%s\n", colorGreen, colorReset)
 			fmt.Printf("%sEdit %s to configure API keys.%s\n", colorDim, configPath, colorReset)
 			fmt.Printf("\nQuick start:\n")
 			fmt.Printf("  %sclawdbot dna show%s\n", colorGreen, colorReset)
@@ -662,7 +662,7 @@ seed. It is not biological or clinical instruction.`,
 			return printDNA(path, value, true, jsonOut)
 		},
 	}
-	generate.Flags().StringVar(&agentName, "agent-name", "Zero Clawd", "Agent name embedded in the DNA profile")
+	generate.Flags().StringVar(&agentName, "agent-name", "The Clawd Bot", "Agent name embedded in the DNA profile")
 	generate.Flags().StringVar(&role, "role", "sovereign Solana trading intelligence", "Agent role embedded in the DNA profile")
 	generate.Flags().StringVar(&seed, "seed", "", "Optional deterministic seed; random when empty")
 	generate.Flags().IntVar(&length, "length", dnaPkg.DefaultSequenceLength, "Synthetic DNA sequence length")
@@ -725,14 +725,14 @@ func NewStatusCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "status",
-		Short: "Show Zero Clawd status",
+		Short: "Show The Clawd Bot status",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
 				return fmt.Errorf("config error: %w", err)
 			}
 
-			fmt.Printf("%s🦞 Zero Clawd Status%s\n\n", colorGreen, colorReset)
+			fmt.Printf("%s🦞 The Clawd Bot Status%s\n\n", colorGreen, colorReset)
 			fmt.Printf("Version:    %s\n", config.FormatVersion())
 			buildTime, goVer := config.FormatBuildInfo()
 			fmt.Printf("Go:         %s\n", goVer)
@@ -803,7 +803,7 @@ func NewCatalogCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "catalog",
 		Short: "Inspect local Clawd skills, agents, and ZK primitives",
-		Long: `Inspect the local Clawd ecosystem indexes that Zero Clawd can use:
+		Long: `Inspect the local Clawd ecosystem indexes that The Clawd Bot can use:
   • /Users/8bit/skills/skills        local AgentSkill library
   • /Users/8bit/agents/agents/src    local agent catalog JSON definitions
   • ./zk-primitives                  Clawd ZK agent/client/program surface
@@ -1020,7 +1020,7 @@ TypeScript surfaces, and secret-looking env/key files.`,
 func NewSkillsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "skills",
-		Short: "Manage Zero Clawd birth skill seeds",
+		Short: "Manage The Clawd Bot birth skill seeds",
 	}
 	cmd.AddCommand(newSkillsBirthCommand())
 	return cmd
@@ -1034,8 +1034,8 @@ func newSkillsBirthCommand() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "birth",
-		Short: "Write or install the default skill packs every Zero Clawd spawn should inherit",
-		Long: `Writes the birth skill manifest into the Zero Clawd workspace and can install
+		Short: "Write or install the default skill packs every Clawd Bot spawn should inherit",
+		Long: `Writes the birth skill manifest into The Clawd Bot workspace and can install
 the default all-skills packs:
   - https://github.com/Solizardking/skills --all
   - https://github.com/samber/cc-skills-golang --all`,
@@ -1137,7 +1137,7 @@ TypeScript paper/devnet harness:
 
 			maxTicks := oodaPkg.ResolveTickCount(simMode, ticks, cmd.Flags().Changed("ticks"))
 
-			fmt.Printf("%s🔄 Zero Clawd OODA Loop%s\n", colorGreen, colorReset)
+			fmt.Printf("%s🔄 The Clawd Bot OODA Loop%s\n", colorGreen, colorReset)
 			if simMode {
 				fmt.Printf("%ssimulated tick banner — paper/sim mode, no live trades%s\n", colorAmber, colorReset)
 			}
@@ -1250,7 +1250,7 @@ func NewOODAHarnessCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "harness",
 		Short: "Run the local TypeScript OODA paper/devnet harness",
-		Long: `Run ooda/loop.ts through the main Zero Clawd CLI.
+		Long: `Run ooda/loop.ts through the main Clawd Bot CLI.
 
 This harness is intentionally paper/devnet-only. It writes the append-only tick
 journal under ooda/journal/ticks.jsonl and can optionally pipe structured JSONL
@@ -2460,7 +2460,7 @@ func runInteractiveAgent(cfg *config.Config) error {
 
 		switch {
 		case input == "exit" || input == "quit":
-			fmt.Printf("%s💤 Zero Clawd sleeping. Vault saved.%s\n", colorDim, colorReset)
+			fmt.Printf("%s💤 The Clawd Bot sleeping. Vault saved.%s\n", colorDim, colorReset)
 			return nil
 		case input == "":
 			// skip empty
@@ -2496,9 +2496,9 @@ func NewWebCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "web",
-		Short: "Start Zero Clawd web console (dashboard + REST API, default :18800)",
+		Short: "Start The Clawd Bot web console (dashboard + REST API, default :18800)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("%s🦞 Zero Clawd Web Console%s\n", colorGreen, colorReset)
+			fmt.Printf("%s🦞 The Clawd Bot Web Console%s\n", colorGreen, colorReset)
 			fmt.Printf("%s  Dashboard → http://localhost:%s%s\n", colorTeal, port, colorReset)
 			fmt.Printf("%s  Config:     %s%s\n\n", colorDim, config.DefaultConfigPath(), colorReset)
 
