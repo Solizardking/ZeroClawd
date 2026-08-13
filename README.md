@@ -168,7 +168,7 @@ npm i -g clawdbot
 npx clawdbot version
 ```
 
-`npx clawdbot` is the same Go CLI the repo builds. If the unscoped name is already taken on the public registry, the publishable fallback is `@clawd/clawdbot` — the binary name stays `clawdbot`.
+`npx clawdbot` is the same Go CLI the repo builds. Pack it from this repo with `make npm-pack` and install the tarball. The unscoped npm name `clawdbot` is already published by another project (OpenClaw 2026.1.24) — this runtime does not overwrite it. The publishable fallback is `@clawd/clawdbot`; the binary name stays `clawdbot`.
 
 ### macOS app (Grok-like DMG)
 
@@ -206,6 +206,8 @@ go mod download && go mod tidy
 make build
 make all
 make cross
+make npm-pack   # dist/clawdbot-1.0.0.tgz
+make dmg        # dist/macos/Clawd-Bot.dmg
 
 # Frontend (optional — required for web console UI)
 cd web/frontend && npm install && npm run build && cd ../..

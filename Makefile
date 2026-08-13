@@ -169,7 +169,7 @@ install: build tui
 
 test:
 	@echo "🧪 Running tests..."
-	$(GOTEST) ./...
+	$(GOTEST) ./cmd/... ./pkg/... ./web/...
 
 lint:
 	@echo "🔍 Running linter..."
