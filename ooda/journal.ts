@@ -20,6 +20,8 @@ const JOURNAL_PATH = join(__dirname, 'journal', 'ticks.jsonl');
 export interface TickEntry {
   tick: number;
   now: string;
+  /** Which token this paper-trading run is labeled for (price feed stays synthetic). */
+  token?: string;
   candles_last3: Candle[];
   book_snapshot: unknown;
   decision: Decision;

@@ -29,6 +29,11 @@
  *     Launch the interactive, shark-themed terminal UI. This is also
  *     what runs when the binary is invoked with no arguments in a TTY.
  *
+ *   zk-shark-agent trade-loop [--token SYM] [--ticks N] [--sleep S] [--llm] [--goblin]
+ *     Run the ooda/ paper-trading harness (devnet, no real funds) for
+ *     any token, streaming its ticks to stdout. Requires running from
+ *     inside the go-bot monorepo.
+ *
  *   zk-shark-agent help
  *     Print this help.
  */
@@ -66,6 +71,10 @@ function printUsage(): void {
   tui
       Launch the interactive, shark-themed terminal UI. This also runs
       automatically when the binary is invoked with no arguments in a TTY.
+
+  trade-loop [--token SYM] [--ticks N] [--sleep S] [--llm] [--goblin]
+      Run the ooda/ paper-trading harness (devnet, no real funds) for
+      any token. Requires running from inside the go-bot monorepo.
 
   help
       Print this help.
@@ -116,6 +125,25 @@ async function main(): Promise<void> {
   if (sub === "tui") {
     const { runTui } = await import("./tui.js");
     process.exitCode = await runTui();
+    return;
+  }
+
+  if (sub === "trade-loop") {
+    const { runTradeLoop } = await import("./tradeLoop.js");
+    const token = readFlag(tail, "--token") ?? "SOL";
+    const ticks = Number.parseInt(readFlag(tail, "--ticks") ?? "50", 10);
+    const sleepSeconds = Number.parseFloat(readFlag(tail, "--sleep") ?? "0.25");
+    const useLlm = tail.includes("--llm");
+    const goblin = tail.includes("--goblin");
+    console.error(`🦈 paper-trading only — devnet, no real funds; token=${token} ticks=${ticks} sleep=${sleepSeconds}s`);
+    const { code } = await runTradeLoop(
+      { token, ticks: Number.isFinite(ticks) && ticks > 0 ? ticks : 50, sleepSeconds: Number.isFinite(sleepSeconds) ? sleepSeconds : 0.25, useLlm, goblin },
+      {
+        onEvent: (ev) => console.log(JSON.stringify(ev)),
+        onLog: (line) => console.error(line),
+      },
+    );
+    process.exitCode = code ?? 0;
     return;
   }
 

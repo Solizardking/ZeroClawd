@@ -27,6 +27,8 @@ export interface Observations {
   now: string;
   mode: string;
   network: string;
+  /** Which token this paper-trading run is labeled for (price feed stays synthetic). */
+  token?: string;
   prompt_markdown?: string;
   candles: Candle[];
   perps_oi_signal?: unknown;
@@ -67,6 +69,7 @@ Tick: ${obs.tick}
 Time: ${obs.now}
 Mode: ${obs.mode}
 Network: ${obs.network}
+Token: ${obs.token ?? 'SOL'}
 
 ### Candles (last ${obs.candles.length})
 ${candleStr}

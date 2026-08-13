@@ -43,6 +43,15 @@ export { runCli } from "./cli.js";
 export { runTui } from "./tui.js";
 export * as sharkTheme from "./theme.js";
 export {
+  runTradeLoop,
+  buildLoopArgs,
+  resolveOodaDir,
+  type TradeLoopOptions,
+  type TradeLoopEvent,
+  type TradeLoopHandlers,
+  type TradeLoopResult,
+} from "./tradeLoop.js";
+export {
   // Re-export the lower-level SDK so callers can drop down when they
   // need to construct instructions by hand.
   computeNullifier,

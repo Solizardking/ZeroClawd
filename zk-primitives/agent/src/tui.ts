@@ -13,6 +13,7 @@ import { createInterface, type Interface } from "node:readline/promises";
 import { ZkSharkAgent } from "./agent.js";
 import { routeIntent } from "./intents.js";
 import * as theme from "./theme.js";
+import { runTradeLoop, type TradeLoopEvent } from "./tradeLoop.js";
 
 /** The active output stream. Set once per `runTui()` call; single-flight by design. */
 let out: NodeJS.WritableStream = defaultStdout;
@@ -36,6 +37,13 @@ async function ask(rl: Interface, label: string, opts: { optional?: boolean } = 
   const suffix = opts.optional ? theme.dim(" (optional)") : "";
   const answer = (await rl.question(theme.prompt(`${label}${suffix} ▸`))).trim();
   return answer;
+}
+
+async function askYesNo(rl: Interface, label: string, defaultValue = false): Promise<boolean> {
+  const hint = defaultValue ? "Y/n" : "y/N";
+  const answer = (await rl.question(theme.prompt(`${label} (${hint}) ▸`))).trim().toLowerCase();
+  if (!answer) return defaultValue;
+  return answer.startsWith("y");
 }
 
 async function askHex32(rl: Interface, label: string): Promise<Uint8Array> {
@@ -139,14 +147,78 @@ async function handleAsk(rl: Interface, agent: ZkSharkAgent): Promise<void> {
   printResult("intent route", JSON.stringify(route, null, 2).split("\n"));
 }
 
+async function handleTradeLoop(rl: Interface, _agent: ZkSharkAgent): Promise<void> {
+  const tokenInput = await ask(rl, "Token to paper-trade, e.g. SOL, BONK, WIF", { optional: true });
+  const token = (tokenInput || "SOL").toUpperCase();
+
+  const ticksInput = await ask(rl, "Number of ticks", { optional: true });
+  const parsedTicks = Number.parseInt(ticksInput, 10);
+  const ticks = Number.isFinite(parsedTicks) && parsedTicks > 0 ? parsedTicks : 50;
+
+  const sleepInput = await ask(rl, "Sleep seconds between ticks (0 = fastest)", { optional: true });
+  const parsedSleep = Number.parseFloat(sleepInput);
+  const sleepSeconds = Number.isFinite(parsedSleep) && parsedSleep >= 0 ? parsedSleep : 0.25;
+
+  const useLlm = await askYesNo(rl, "Use an LLM for decisions? (needs an API key; falls back to SMA)");
+  const goblin = await askYesNo(rl, "GOBLIN MODE — max aggression, 0ms ticks?");
+
+  out.write(
+    `\n${theme.dim("🦈 paper-trading only — devnet, no real funds; safety contract enforced by ooda/validate.ts")}\n\n`,
+  );
+
+  let ticksSeen = 0;
+  let sawKillswitch = false;
+  try {
+    const { code } = await runTradeLoop(
+      { token, ticks, sleepSeconds, useLlm, goblin },
+      {
+        onEvent: (ev: TradeLoopEvent) => {
+          if (ev.event === "start") {
+            out.write(
+              `${theme.oceanBlue(`diving in — ${token} · ${ticks} ticks · ${goblin ? "GOBLIN MODE" : useLlm ? "LLM" : "deterministic SMA"}`)}\n`,
+            );
+          } else if (ev.event === "tick") {
+            ticksSeen = typeof ev.tick === "number" ? ev.tick : ticksSeen;
+            const decision = ev.decision as { action?: string; reason?: string } | undefined;
+            const price = typeof ev.price === "number" ? ev.price : undefined;
+            const line =
+              `[${String(ticksSeen).padStart(3)}/${ticks}] ${token} ${price ?? "?"} — ` +
+              `${decision?.action ?? "?"} (${ev.outcome ?? "?"}) — ${decision?.reason ?? ""}`;
+            out.write(`\r${" ".repeat(110)}\r${theme.dim(line.slice(0, 110))}`);
+          } else if (ev.event === "killswitch") {
+            sawKillswitch = true;
+            out.write(`\n${theme.finRed(`🦈💢 kill-switch tripped after ${ev.consecutive_losses} consecutive losses`)}\n`);
+          } else if (ev.event === "done") {
+            out.write("\n");
+          }
+        },
+        onLog: (line: string) => out.write(`${theme.dim(line)}\n`),
+      },
+    );
+
+    printResult("trade loop finished", [
+      `token          : ${token}`,
+      `ticks          : ${ticksSeen}/${ticks}`,
+      `mode           : ${goblin ? "GOBLIN MODE" : useLlm ? "LLM" : "deterministic SMA"}`,
+      sawKillswitch
+        ? theme.finRed("kill-switch    : tripped")
+        : `exit code      : ${code === 0 ? theme.kelpGreen("0") : theme.finRed(String(code))}`,
+      theme.dim("journal        : ooda/journal/ticks.jsonl"),
+    ]);
+  } catch (err) {
+    printError(err);
+  }
+}
+
 async function handleHelp(): Promise<void> {
   printResult("help", [
-    "attest    — build a publish_attestation instruction",
-    "commit    — build a commit_encrypted_state instruction",
-    "verify    — off-chain Groth16 sanity check",
-    "nullifier — derive a deterministic 32-byte nullifier",
-    "ask       — natural-language intent routing",
-    "inspect   — show the active configuration",
+    "attest     — build a publish_attestation instruction",
+    "commit     — build a commit_encrypted_state instruction",
+    "verify     — off-chain Groth16 sanity check",
+    "nullifier  — derive a deterministic 32-byte nullifier",
+    "ask        — natural-language intent routing",
+    "inspect    — show the active configuration",
+    "trade loop — run the ooda paper-trading harness for any token",
     "",
     "Environment: ZK_SHARK_RPC_URL (required), ZK_SHARK_PROGRAM_ID, ZK_SHARK_KEYPAIR, ...",
     "Run `zk-shark-agent help` outside the TUI for the full flag reference.",
@@ -167,6 +239,7 @@ const MENU: MenuEntry[] = [
   { key: "5", label: "#️⃣  Compute a nullifier", handler: handleNullifier },
   { key: "6", label: "💬 Ask the shark (natural language)", handler: handleAsk },
   { key: "7", label: "❓ Help", handler: handleHelp },
+  { key: "8", label: "🔁 Run a trade loop (paper, any token)", handler: handleTradeLoop },
 ];
 
 function printMenu(agent: ZkSharkAgent): void {

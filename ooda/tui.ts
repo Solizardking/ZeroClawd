@@ -25,6 +25,7 @@ interface TickEvent {
   event: 'tick' | 'start' | 'done' | 'killswitch';
   tick?: number;
   now?: string;
+  token?: string;
   price?: number;
   decision?: { action: string; reason: string; side?: string; size_lamports?: number; position_id?: string };
   outcome?: string;
@@ -39,6 +40,7 @@ interface TickEvent {
 interface DisplayState {
   lastTick: number;
   totalTicks: number;
+  token: string;
   price: number;
   priceHistory: number[];
   lastDecision: TickEvent['decision'] | null;
@@ -55,6 +57,7 @@ interface DisplayState {
 const ds: DisplayState = {
   lastTick: 0,
   totalTicks: 0,
+  token: 'SOL',
   price: 0,
   priceHistory: [],
   lastDecision: null,
@@ -120,8 +123,8 @@ function render(): void {
   // Price + sparkline
   const priceStr = ds.price > 0 ? `$${(ds.price / 1000).toFixed(3)}` : '---';
   const spark = sparkline(ds.priceHistory, Math.min(40, w - 30));
-  const priceRow = `  SOL ~${chalk.yellow.bold(priceStr)}  ${spark}`;
-  const priceRowPlain = `  SOL ~${priceStr}  ` + '·'.repeat(Math.min(40, w - 30));
+  const priceRow = `  ${ds.token} ~${chalk.yellow.bold(priceStr)}  ${spark}`;
+  const priceRowPlain = `  ${ds.token} ~${priceStr}  ` + '·'.repeat(Math.min(40, w - 30));
   const pricePad = Math.max(0, w - priceRowPlain.length);
   lines.push(chalk.magenta('║') + priceRow + ' '.repeat(pricePad) + chalk.magenta('║'));
 
@@ -189,8 +192,10 @@ rl.on('line', (line: string) => {
 
     if (ev.event === 'start') {
       ds.totalTicks = ev.ticks ?? 50;
+      ds.token = ev.token ?? ds.token;
     } else if (ev.event === 'tick') {
       ds.lastTick = ev.tick ?? ds.lastTick;
+      ds.token = ev.token ?? ds.token;
       ds.price = ev.price ?? ds.price;
       ds.priceHistory.push(ds.price);
       if (ds.priceHistory.length > 60) ds.priceHistory.shift();

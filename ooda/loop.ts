@@ -43,6 +43,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { values: flags } = parseArgs({
   options: {
+    token:          { type: 'string' },  // label only — price feed stays synthetic/paper
     ticks:          { type: 'string' },
     sleep:          { type: 'string' },
     seed:           { type: 'string' },
@@ -52,7 +53,7 @@ const { values: flags } = parseArgs({
     mode:           { type: 'string',  default: 'paper' },
     goblin:         { type: 'boolean', default: false },  // 👺 GOBLIN MODE
     'perps-oi':     { type: 'boolean', default: false },
-    'perps-symbol': { type: 'string',  default: 'SOL-PERP' },
+    'perps-symbol': { type: 'string' },  // defaults to `${TOKEN}-PERP` below
     'perps-signal-mode': { type: 'string', default: 'paper' },
     'perps-oi-mock': { type: 'boolean', default: false },
   },
@@ -76,8 +77,9 @@ const SEED         = Number.isFinite(parsedSeed) ? parsedSeed : 42;
 const COMMIT_EVERY = Number.isFinite(parsedCommit) && parsedCommit > 0 ? parsedCommit : 0;
 const TUI_MODE     = flags['tui'] as boolean;
 const USE_LLM      = flags['llm'] as boolean || GOBLIN_MODE;  // goblin always uses LLM when key available
+const TOKEN        = ((flags['token'] as string | undefined) ?? 'SOL').toUpperCase();
 const USE_PERPS_OI = flags['perps-oi'] as boolean;
-const PERPS_SYMBOL = flags['perps-symbol'] as string;
+const PERPS_SYMBOL = (flags['perps-symbol'] as string | undefined) ?? `${TOKEN}-PERP`;
 const PERPS_SIGNAL_MODE = flags['perps-signal-mode'] as string;
 const PERPS_OI_MOCK = flags['perps-oi-mock'] as boolean;
 
@@ -217,9 +219,9 @@ async function runLoop(): Promise<void> {
   const observer = new SynthObserver(SEED, 150_000, 20);
   let previousOiTick: { ts: number; symbol: string; markPrice: number; openInterestUsd: number } | undefined;
 
-  log(`[clawd] starting ${TICKS} ticks, sleep=${SLEEP_MS}ms, llm=${USE_LLM}, goblin=${GOBLIN_MODE}, perps_oi=${USE_PERPS_OI}`);
+  log(`[clawd] token=${TOKEN} starting ${TICKS} ticks, sleep=${SLEEP_MS}ms, llm=${USE_LLM}, goblin=${GOBLIN_MODE}, perps_oi=${USE_PERPS_OI}`);
   if (TUI_MODE) {
-    emit({ event: 'start', ticks: TICKS, config, goblin: GOBLIN_MODE, perps_oi: USE_PERPS_OI, perps_symbol: PERPS_SYMBOL });
+    emit({ event: 'start', token: TOKEN, ticks: TICKS, config, goblin: GOBLIN_MODE, perps_oi: USE_PERPS_OI, perps_symbol: PERPS_SYMBOL });
   }
 
   for (let tick = 1; tick <= TICKS; tick++) {
@@ -245,6 +247,7 @@ async function runLoop(): Promise<void> {
       now: now.toISOString(),
       mode: 'paper',
       network: 'devnet',
+      token: TOKEN,
       prompt_markdown: configContent,
       candles: candles.slice(-10),  // send last 10 to model
       perps_oi_signal: perpsOiSignal,
@@ -295,6 +298,7 @@ async function runLoop(): Promise<void> {
       const killEntry: TickEntry = {
         tick,
         now: now.toISOString(),
+        token: TOKEN,
         candles_last3: candles.slice(-3),
         book_snapshot: { ...state.book },
         decision,
@@ -317,6 +321,7 @@ async function runLoop(): Promise<void> {
     const entry: TickEntry = {
       tick,
       now: now.toISOString(),
+      token: TOKEN,
       candles_last3: candles.slice(-3),
       book_snapshot: {
         positions: state.book.positions,
@@ -337,6 +342,7 @@ async function runLoop(): Promise<void> {
       event: 'tick',
       tick,
       now: now.toISOString(),
+      token: TOKEN,
       price: currentPrice,
       decision,
       outcome,

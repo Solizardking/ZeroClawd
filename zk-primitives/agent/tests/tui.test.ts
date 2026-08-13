@@ -28,6 +28,28 @@ vi.mock("@clawd/zk-client", () => {
   return { ClawdZkClient, computeNullifier };
 });
 
+// Never spawn the real ooda/loop.ts from these tests — fake the bridge
+// and feed it a couple of synthetic events instead.
+const runTradeLoopMock = vi.fn(
+  async (
+    _opts: unknown,
+    handlers: { onEvent?: (ev: Record<string, unknown>) => void } = {},
+  ): Promise<{ code: number | null }> => {
+    handlers.onEvent?.({ event: "start", token: "TEST", ticks: 1 });
+    handlers.onEvent?.({
+      event: "tick",
+      tick: 1,
+      token: "TEST",
+      price: 12345,
+      decision: { action: "hold", reason: "mocked" },
+      outcome: "applied",
+    });
+    handlers.onEvent?.({ event: "done", ticks: 1 });
+    return { code: 0 };
+  },
+);
+vi.mock("../src/tradeLoop.js", () => ({ runTradeLoop: runTradeLoopMock }));
+
 const { runTui } = await import("../src/tui.js");
 
 class FakeTerminal {
@@ -105,6 +127,31 @@ describe("runTui", () => {
     const code = await runPromise;
     expect(code).toBe(0);
     expect(term.text()).toContain('No fin for "99"');
+  });
+
+  test("runs a trade loop through the mocked ooda bridge", async () => {
+    const term = new FakeTerminal();
+    const runPromise = runTui({ input: term.input, output: term.output });
+
+    await term.type("8"); // trade loop
+    await term.type("test"); // token
+    await term.type("1"); // ticks
+    await term.type("0"); // sleep
+    await term.type("n"); // use llm
+    await term.type("n"); // goblin
+    await term.type(""); // press enter to continue
+    await term.type("q");
+    term.end();
+
+    const code = await runPromise;
+    const text = term.text();
+
+    expect(code).toBe(0);
+    expect(runTradeLoopMock).toHaveBeenCalledTimes(1);
+    expect(runTradeLoopMock.mock.calls[0]?.[0]).toMatchObject({ token: "TEST", ticks: 1, sleepSeconds: 0 });
+    expect(text).toContain("paper-trading only");
+    expect(text).toContain("trade loop finished");
+    expect(text).toContain("TEST");
   });
 
   test("exits with code 1 and a friendly error when config is missing", async () => {

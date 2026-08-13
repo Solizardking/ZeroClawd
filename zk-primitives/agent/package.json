@@ -35,6 +35,10 @@
     "./theme": {
       "import": "./dist/theme.js",
       "types": "./dist/theme.d.ts"
+    },
+    "./tradeLoop": {
+      "import": "./dist/tradeLoop.js",
+      "types": "./dist/tradeLoop.d.ts"
     }
   },
   "files": [
@@ -51,7 +55,8 @@
     "clean": "rm -rf dist .turbo",
     "start": "node ./dist/cli.js",
     "tui": "node ./dist/cli.js tui",
-    "inspect": "node ./dist/cli.js inspect"
+    "inspect": "node ./dist/cli.js inspect",
+    "trade-loop": "node ./dist/cli.js trade-loop"
   },
   "keywords": [
     "solana",
@@ -68,7 +73,10 @@
     "zk-shark-agent",
     "tui",
     "terminal-ui",
-    "shark-tui"
+    "shark-tui",
+    "trade-loop",
+    "ooda",
+    "paper-trading"
   ],
   "license": "Apache-2.0",
   "dependencies": {
