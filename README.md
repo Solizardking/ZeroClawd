@@ -1,8 +1,8 @@
 <div align="center">
 
-<picture>
-  <img src="docs/assets/clawd-bot-hero.svg" alt="The Clawd Bot — animated cypherpunk Solana runtime hero" width="100%">
-</picture>
+<img src="docs/assets/clawd-bot-hero.png" alt="The Clawd Bot — sovereign Solana agent" width="100%">
+
+<img src="docs/assets/clawdbot-hero.svg" alt="The Clawd Bot — animated neon runtime hero" width="100%">
 
 # THE CLAWD BOT
 
