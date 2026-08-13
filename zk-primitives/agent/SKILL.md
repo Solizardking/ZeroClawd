@@ -99,6 +99,13 @@ Running the binary with no arguments in a terminal (or `zk-shark-agent
 tui` explicitly) launches an interactive, shark-themed TUI menu that
 wraps the same operations for humans — see `README.md` for details.
 
+`zk-shark-agent trade-loop --token <SYM>` (also menu option `8` in the
+TUI) spawns the sibling `ooda/loop.ts` paper-trading harness for any
+named token and streams its ticks live. It is a thin bridge — all
+safety enforcement (paper mode, devnet only, position caps, kill-switch)
+lives entirely in `ooda/`, unchanged by this agent. Requires running
+from inside the go-bot monorepo.
+
 The proof JSON shape is:
 
 ```json

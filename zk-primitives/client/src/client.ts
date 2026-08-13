@@ -11,7 +11,6 @@ import {
   ClawdZkClientConfig,
   CommitStateArgs,
   PublishAttestationArgs,
-  Groth16Proof,
 } from "./types.js";
 import {
   buildCommitPublicInputs,
