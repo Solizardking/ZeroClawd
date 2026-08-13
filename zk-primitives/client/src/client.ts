@@ -24,7 +24,7 @@ import {
   fetchValidityProofV2,
   packAccounts,
 } from "./state.js";
-import { computeNullifier, deriveNullifierAddress } from "./nullifier.js";
+import { deriveNullifierAddress } from "./nullifier.js";
 
 const PROGRAM_IDENTITY: PublicKey = new PublicKey(
   "4vJ9JU1bJJE96FWSVKmnrL3xFU5jSBSVdk9x4La2vzhn",
