@@ -54,7 +54,7 @@ build:
 	@echo "🦞 Building ClawdBot CLI..."
 	@mkdir -p $(BUILD_DIR)
 	$(GOBUILD) -o $(BIN_CLI) ./cmd/clawdbot
-	@echo "✓ $(BIN_CLI) built ($(shell file $(BIN_CLI) | cut -d: -f2))"
+	@echo "✓ $(BIN_CLI) built"
 	@ls -lh $(BIN_CLI)
 
 tui:
@@ -116,15 +116,9 @@ macos:
 # ── Desktop app + studio DMG ──────────────────────────────────────────
 
 app: build
-	@chmod +x scripts/package-macos.sh
 	@echo "🦞 Building Clawd Bot.app (no DMG)..."
-	@CLI_BIN=$(BIN_CLI) bash -c 'set -euo pipefail; \
-		ROOT="$$(pwd)"; \
-		DIST="$$ROOT/dist/macos"; \
-		mkdir -p "$$DIST"; \
-		if [ ! -f packaging/macos/icon.icns ]; then scripts/package-macos.sh; exit 0; fi; \
-		swiftc -O -o "$$DIST/ClawdBot" -framework Cocoa -framework WebKit packaging/macos/main.swift; \
-		go run packaging/macos/stage.go -root "$$DIST/dmg" -bin $(BIN_CLI) -app-bin "$$DIST/ClawdBot" -icon packaging/macos/icon.icns -html packaging/macos/studio.html'
+	@chmod +x scripts/package-macos.sh
+	CLI_BIN=$(BIN_CLI) ./scripts/package-macos.sh
 
 dmg: build
 	@echo "🦞 Building studio DMG..."
