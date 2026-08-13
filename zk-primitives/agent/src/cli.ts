@@ -34,13 +34,32 @@
  *     any token, streaming its ticks to stdout. Requires running from
  *     inside the go-bot monorepo.
  *
+ *   zk-shark-agent clawd-gate [walletAddress]
+ *     Check whether a wallet qualifies for treasury-sponsored (free)
+ *     agent minting by its $CLAWD balance. Defaults to the configured
+ *     signer. Read-only.
+ *
+ *   zk-shark-agent register-agent <doc.json> --uri <hostedMetadataUrl> [--network mainnet|devnet] [--confirm]
+ *     Register + mint the onchain agent identity (a Metaplex Core NFT)
+ *     from an EIP-8004-style registration doc. Defaults to devnet and a
+ *     dry run — pass --confirm to actually submit. PERMANENT once sent.
+ *
+ *   zk-shark-agent launch-token --asset <agentAssetAddress> --name <name> --symbol <sym> --image <irysUrl>
+ *                                [--description <text>] [--network mainnet|devnet]
+ *                                [--first-buy <sol>] [--set-token] [--confirm]
+ *     Launch the agent's bonding-curve token via Metaplex Genesis.
+ *     Defaults to devnet and a dry run. --set-token is PERMANENT —
+ *     an agent can only ever have one token.
+ *
  *   zk-shark-agent help
  *     Print this help.
  */
 
 import { Buffer } from "node:buffer";
+import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Connection } from "@solana/web3.js";
 import { ZkSharkAgent } from "./agent.js";
 import { routeIntent } from "./intents.js";
 
@@ -75,6 +94,20 @@ function printUsage(): void {
   trade-loop [--token SYM] [--ticks N] [--sleep S] [--llm] [--goblin]
       Run the ooda/ paper-trading harness (devnet, no real funds) for
       any token. Requires running from inside the go-bot monorepo.
+
+  clawd-gate [walletAddress]
+      Check $CLAWD-gated free-mint eligibility for a wallet (read-only).
+      Defaults to the configured signer.
+
+  register-agent <doc.json> --uri <hostedMetadataUrl> [--network mainnet|devnet] [--confirm]
+      Register + mint the onchain agent identity (Metaplex Core NFT).
+      Dry run by default; --confirm actually submits. Permanent once sent.
+
+  launch-token --asset <agentAssetAddress> --name <name> --symbol <sym> --image <irysUrl>
+               [--description <text>] [--network mainnet|devnet] [--first-buy <sol>]
+               [--set-token] [--confirm]
+      Launch the agent's bonding-curve token (Metaplex Genesis). Dry run
+      by default. --set-token is PERMANENT.
 
   help
       Print this help.
@@ -144,6 +177,74 @@ async function main(): Promise<void> {
       },
     );
     process.exitCode = code ?? 0;
+    return;
+  }
+
+  if (sub === "clawd-gate") {
+    const { checkClawdGate, getClawdBalanceOnchain } = await import("./clawdToken.js");
+    const agent = await ZkSharkAgent.fromEnv();
+    const wallet = tail[0] ?? agent.signer?.publicKey.toBase58();
+    if (!wallet) throw new Error(`Usage: ${CLI_NAME} clawd-gate <walletAddress> (or configure ZK_SHARK_KEYPAIR)`);
+    const gate = await checkClawdGate(wallet);
+    console.log(JSON.stringify({ gate }, null, 2));
+    try {
+      const connection = new Connection(agent.config.rpcUrl);
+      const onchain = await getClawdBalanceOnchain(connection, wallet);
+      console.log(`onchain balance: ${onchain.balanceUi} $CLAWD (${onchain.balanceRaw} raw)`);
+    } catch (err) {
+      console.error(`[clawd-gate] onchain balance check skipped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    return;
+  }
+
+  if (sub === "register-agent") {
+    const docPath = tail[0];
+    if (!docPath) throw new Error(`Usage: ${CLI_NAME} register-agent <doc.json> --uri <hostedMetadataUrl> [--network mainnet|devnet] [--confirm]`);
+    const uri = readFlag(tail, "--uri");
+    if (!uri) throw new Error(`Usage: ${CLI_NAME} register-agent <doc.json> --uri <hostedMetadataUrl> [--network mainnet|devnet] [--confirm]`);
+    const networkFlag = readFlag(tail, "--network");
+    const network = networkFlag === "mainnet" ? "solana-mainnet" : "solana-devnet";
+    const confirm = tail.includes("--confirm");
+    const doc = JSON.parse(await readFile(resolvePath(docPath), "utf-8"));
+    const { mintAgentIdentity } = await import("./metaplexAgentIdentity.js");
+    const agent = await ZkSharkAgent.fromEnv();
+    console.error(`🦈 register-agent: network=${network} confirm=${confirm}${confirm ? " (SUBMITTING — real tx)" : " (dry run)"}`);
+    const result = await mintAgentIdentity(agent.config.rpcUrl, agent.signer, { doc, uri, network, confirm });
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  if (sub === "launch-token") {
+    const agentAssetAddress = readFlag(tail, "--asset");
+    const name = readFlag(tail, "--name");
+    const symbol = readFlag(tail, "--symbol");
+    const image = readFlag(tail, "--image");
+    if (!agentAssetAddress || !name || !symbol || !image) {
+      throw new Error(
+        `Usage: ${CLI_NAME} launch-token --asset <agentAssetAddress> --name <name> --symbol <sym> --image <irysUrl> [--description <text>] [--network mainnet|devnet] [--first-buy <sol>] [--set-token] [--confirm]`,
+      );
+    }
+    const description = readFlag(tail, "--description");
+    const networkFlag = readFlag(tail, "--network");
+    const network = networkFlag === "mainnet" ? "solana-mainnet" : "solana-devnet";
+    const firstBuyFlag = readFlag(tail, "--first-buy");
+    const firstBuyAmount = firstBuyFlag ? Number.parseFloat(firstBuyFlag) : undefined;
+    const setToken = tail.includes("--set-token");
+    const confirm = tail.includes("--confirm");
+    const { launchAgentToken } = await import("./genesisAgentToken.js");
+    const agent = await ZkSharkAgent.fromEnv();
+    console.error(
+      `🦈 launch-token: network=${network} setToken=${setToken} confirm=${confirm}${confirm ? " (SUBMITTING — real tx)" : " (dry run)"}`,
+    );
+    const result = await launchAgentToken(agent.config.rpcUrl, agent.signer, {
+      agentAssetAddress,
+      token: { name, symbol, image, description },
+      network,
+      firstBuyAmount,
+      setToken,
+      confirm,
+    });
+    console.log(JSON.stringify(result, null, 2));
     return;
   }
 

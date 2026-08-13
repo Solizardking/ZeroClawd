@@ -8,12 +8,19 @@
  */
 
 import { Buffer } from "node:buffer";
+import { readFile } from "node:fs/promises";
 import { stdin as defaultStdin, stdout as defaultStdout } from "node:process";
+import { resolve as resolvePath } from "node:path";
 import { createInterface, type Interface } from "node:readline/promises";
+import { Connection } from "@solana/web3.js";
+import type { SvmNetwork } from "@metaplex-foundation/genesis";
 import { ZkSharkAgent } from "./agent.js";
 import { routeIntent } from "./intents.js";
 import * as theme from "./theme.js";
 import { runTradeLoop, type TradeLoopEvent } from "./tradeLoop.js";
+import { checkClawdGate, getClawdBalanceOnchain } from "./clawdToken.js";
+import { mintAgentIdentity, type AgentRegistrationDoc } from "./metaplexAgentIdentity.js";
+import { launchAgentToken } from "./genesisAgentToken.js";
 
 /** The active output stream. Set once per `runTui()` call; single-flight by design. */
 let out: NodeJS.WritableStream = defaultStdout;
@@ -44,6 +51,11 @@ async function askYesNo(rl: Interface, label: string, defaultValue = false): Pro
   const answer = (await rl.question(theme.prompt(`${label} (${hint}) ▸`))).trim().toLowerCase();
   if (!answer) return defaultValue;
   return answer.startsWith("y");
+}
+
+async function askNetwork(rl: Interface): Promise<SvmNetwork> {
+  const answer = (await rl.question(theme.prompt("Network — mainnet or devnet (default devnet) ▸"))).trim().toLowerCase();
+  return answer.startsWith("main") ? "solana-mainnet" : "solana-devnet";
 }
 
 async function askHex32(rl: Interface, label: string): Promise<Uint8Array> {
@@ -210,6 +222,117 @@ async function handleTradeLoop(rl: Interface, _agent: ZkSharkAgent): Promise<voi
   }
 }
 
+async function handleClawdGate(rl: Interface, agent: ZkSharkAgent): Promise<void> {
+  const walletInput = await ask(rl, "Wallet to check (blank = configured signer)", { optional: true });
+  const wallet = walletInput || agent.signer?.publicKey.toBase58();
+  if (!wallet) {
+    printResult("$CLAWD gate", [theme.finRed("No wallet given and no signer configured (set ZK_SHARK_KEYPAIR).")]);
+    return;
+  }
+
+  const gate = await theme.withSpinner("checking in with the reef ($CLAWD)...", () => checkClawdGate(wallet));
+  const lines = [
+    `wallet         : ${wallet}`,
+    `mint           : ${gate.mint}`,
+    `balance        : ${gate.balance.toLocaleString()} (min ${gate.minimumBalance.toLocaleString()})`,
+    `eligible       : ${gate.eligible ? theme.kelpGreen("true — treasury-sponsored mint") : theme.finRed("false — x402 USDC fee applies")}`,
+    theme.dim(`source         : ${gate.source}`),
+  ];
+  try {
+    const onchain = await getClawdBalanceOnchain(new Connection(agent.config.rpcUrl), wallet);
+    lines.push(theme.dim(`onchain read   : ${onchain.balanceUi} $CLAWD (independent RPC check)`));
+  } catch {
+    // best-effort secondary check; the API gate result above already answered the question
+  }
+  printResult("$CLAWD gate", lines);
+}
+
+async function handleRegisterAgent(rl: Interface, agent: ZkSharkAgent): Promise<void> {
+  const docPath = await ask(rl, "Path to agent registration doc.json");
+  const uri = await ask(rl, "URL where that doc (or equivalent metadata) is hosted");
+  const network = await askNetwork(rl);
+
+  const raw = await readFile(resolvePath(docPath), "utf-8");
+  const doc = JSON.parse(raw) as AgentRegistrationDoc;
+
+  out.write(
+    `\n${theme.dim(`🦈 this mints a permanent onchain Core NFT identity for "${doc.name}". Real SOL fees apply unless $CLAWD-gated.`)}\n`,
+  );
+  const confirm =
+    network === "solana-mainnet"
+      ? await askYesNo(rl, theme.finRed("MAINNET — actually submit? This is irreversible and may cost real SOL"))
+      : await askYesNo(rl, "Actually submit (devnet)? No if you just want to preview the request");
+
+  const result = await theme.withSpinner(
+    confirm ? "surfacing to register the identity..." : "building a preview (no network mutation)...",
+    () => mintAgentIdentity(agent.config.rpcUrl, agent.signer, { doc, uri, network, confirm }),
+  );
+
+  if (result.confirmed) {
+    printResult("agent identity minted", [
+      `network        : ${result.network}`,
+      `asset address  : ${result.assetAddress}`,
+      `signature      : ${result.signatureHex}`,
+    ]);
+  } else {
+    printResult("register-agent preview (dry run)", [
+      `network        : ${result.network}`,
+      theme.dim("no transaction was sent — re-run and confirm to submit for real"),
+      ...JSON.stringify(result.input, null, 2).split("\n"),
+    ]);
+  }
+}
+
+async function handleLaunchToken(rl: Interface, agent: ZkSharkAgent): Promise<void> {
+  const agentAssetAddress = await ask(rl, "Agent Core asset address (from register-agent)");
+  const name = await ask(rl, "Token name (1-32 chars)");
+  const symbol = await ask(rl, "Token symbol (1-10 chars)");
+  const image = await ask(rl, "Token image — Irys URL (https://gateway.irys.xyz/...)");
+  const description = await ask(rl, "Description", { optional: true });
+  const network = await askNetwork(rl);
+  const firstBuyInput = await ask(rl, "First-buy SOL amount (blank = none)", { optional: true });
+  const firstBuyAmount = firstBuyInput ? Number.parseFloat(firstBuyInput) : undefined;
+
+  const setToken = await askYesNo(
+    rl,
+    theme.finRed("Permanently link this token to the agent (setToken)? Cannot be undone, ever"),
+  );
+
+  out.write(`\n${theme.dim("🦈 this launches a real bonding-curve token and costs real SOL fees.")}\n`);
+  const confirm =
+    network === "solana-mainnet"
+      ? await askYesNo(rl, theme.finRed("MAINNET — actually submit? This is irreversible and costs real SOL"))
+      : await askYesNo(rl, "Actually submit (devnet)? No if you just want to preview the request");
+
+  const result = await theme.withSpinner(
+    confirm ? "cutting the ribbon on the bonding curve..." : "building a preview (no network mutation)...",
+    () =>
+      launchAgentToken(agent.config.rpcUrl, agent.signer, {
+        agentAssetAddress,
+        token: { name, symbol, image, description: description || undefined },
+        network,
+        firstBuyAmount,
+        setToken,
+        confirm,
+      }),
+  );
+
+  if (result.confirmed) {
+    printResult("agent token launched", [
+      `network        : ${result.network}`,
+      `mint address   : ${result.mintAddress}`,
+      `genesis acct   : ${result.genesisAccount}`,
+      `link           : ${result.launchLink}`,
+    ]);
+  } else {
+    printResult("launch-token preview (dry run)", [
+      `network        : ${result.network}`,
+      theme.dim("no transaction was sent — re-run and confirm to submit for real"),
+      ...JSON.stringify(result.input, null, 2).split("\n"),
+    ]);
+  }
+}
+
 async function handleHelp(): Promise<void> {
   printResult("help", [
     "attest     — build a publish_attestation instruction",
@@ -219,6 +342,9 @@ async function handleHelp(): Promise<void> {
     "ask        — natural-language intent routing",
     "inspect    — show the active configuration",
     "trade loop — run the ooda paper-trading harness for any token",
+    "clawd gate — check $CLAWD-gated free-mint eligibility (read-only)",
+    "register   — mint the onchain agent identity (Metaplex Core NFT)",
+    "launch     — launch the agent's bonding-curve token (Genesis)",
     "",
     "Environment: ZK_SHARK_RPC_URL (required), ZK_SHARK_PROGRAM_ID, ZK_SHARK_KEYPAIR, ...",
     "Run `zk-shark-agent help` outside the TUI for the full flag reference.",
@@ -240,6 +366,9 @@ const MENU: MenuEntry[] = [
   { key: "6", label: "💬 Ask the shark (natural language)", handler: handleAsk },
   { key: "7", label: "❓ Help", handler: handleHelp },
   { key: "8", label: "🔁 Run a trade loop (paper, any token)", handler: handleTradeLoop },
+  { key: "9", label: "🦞 Check $CLAWD gate (pump.fun)", handler: handleClawdGate },
+  { key: "10", label: "🪪 Register + mint agent identity (Metaplex)", handler: handleRegisterAgent },
+  { key: "11", label: "🚀 Launch agent token (Genesis)", handler: handleLaunchToken },
 ];
 
 function printMenu(agent: ZkSharkAgent): void {

@@ -50,6 +50,26 @@ const runTradeLoopMock = vi.fn(
 );
 vi.mock("../src/tradeLoop.js", () => ({ runTradeLoop: runTradeLoopMock }));
 
+// Never hit the real cheshireterminal.ai API or Solana RPC from these tests.
+const checkClawdGateMock = vi.fn(async (wallet: string) => ({
+  mint: "8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump",
+  balance: 2_000_000,
+  minimumBalance: 1_000_000,
+  eligible: true,
+  source: "mocked",
+  wallet,
+}));
+const getClawdBalanceOnchainMock = vi.fn(async () => ({
+  mint: "8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump",
+  balanceRaw: 2_000_000n,
+  balanceUi: 2,
+  decimals: 6,
+}));
+vi.mock("../src/clawdToken.js", () => ({
+  checkClawdGate: checkClawdGateMock,
+  getClawdBalanceOnchain: getClawdBalanceOnchainMock,
+}));
+
 const { runTui } = await import("../src/tui.js");
 
 class FakeTerminal {
