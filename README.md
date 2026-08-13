@@ -1,7 +1,7 @@
 <div align="center">
 
 <picture>
-  <img src="docs/assets/zero-clawd-hero.svg" alt="The Clawd Bot — animated cypherpunk Solana runtime hero" width="100%">
+  <img src="docs/assets/clawd-bot-hero.svg" alt="The Clawd Bot — animated cypherpunk Solana runtime hero" width="100%">
 </picture>
 
 # THE CLAWD BOT
@@ -12,12 +12,43 @@
 
 [![Go](https://img.shields.io/badge/Go-1.26.4+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
 [![Solana](https://img.shields.io/badge/Solana-Mainnet-14F195?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![npm](https://img.shields.io/badge/npm-@x402solana/clawdbot-CB3837?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/@x402solana/clawdbot)
 [![License](https://img.shields.io/badge/License-MIT-9945FF?style=for-the-badge)](LICENSE)
 
 **Solana-first · beats Zero on footprint · 81 Go source files · 45 Go packages · 24,166 Go lines · 3 binaries**
 
 <sub><strong>0.57 MB</strong> source archive · <strong>2.06 MiB</strong> exportable source · <strong>9.97 MB</strong> stripped CLI · Grok-first runtime · GLM-5.2 model surface</sub>
+
+</div>
+
+```bash
+curl -fsSL https://cheshireterminal.ai/clawdbot | bash
+```
+
+```bash
+npm i -g @x402solana/clawdbot
+npx @x402solana/clawdbot version
+npm i -g @x402solana/clawd-bot
+npm i @x402solana/zk-primitives
+```
+
+| Package | npm | What it is |
+|:---|:---|:---|
+| **The Clawd Bot CLI** | [`@x402solana/clawdbot`](https://www.npmjs.com/package/@x402solana/clawdbot) | Go `clawdbot` binary — agent, OODA, Solana, catalog |
+| **The Clawd Bot alias** | [`@x402solana/clawd-bot`](https://www.npmjs.com/package/@x402solana/clawd-bot) | Same CLI, friendlier package name (`clawdbot` + `clawd-bot` bins) |
+| **ZK primitives** | [`@x402solana/zk-primitives`](https://www.npmjs.com/package/@x402solana/zk-primitives) | Zero-knowledge catalog — nullifiers, Groth16, Light Protocol |
+
+After install:
+
+```bash
+source ~/.clawdbot/.env
+clawdbot version
+clawdbot agent -m "What is SOL price?"
+clawdbot ooda --sim
+clawdbot catalog zk
+```
+
+<div align="center">
 
 [Quick Start](#quick-start) · [Architecture](#architecture) · [The Six Laws](#the-six-law-harness) · [CLI Reference](#cli-reference) · [Security](SECURITY.md) · [Release](docs/OPEN_SOURCE_RELEASE.md)
 
@@ -89,9 +120,9 @@ The adaptation guide lives at **`zk-primitives/docs/PIEDPIPER_ADAPTATION.md`** �
 
 **The Clawd Bot** is the world's first **Solana-native sovereign AI agent** — a full-stack autonomous trading intelligence bound by Clawd's full **six-law harness**: three immutable on-chain laws and three off-chain interpretive laws. Built in pure Go for minimal resource consumption, it orchestrates on-chain data providers, zero-knowledge proofs, zk primitives, and x402-gated surfaces through a military-grade OODA decision loop with persistent epistemological memory.
 
-The system compiles to three standalone binaries that run on everything from NVIDIA Jetson edge devices to cloud VMs — no containers required, no runtime dependencies, instant boot.
+The runtime compiles to three standalone binaries that boot on NVIDIA Jetson edge boards and cloud VMs alike — no container required, no interpreter tax, no warm-up pause.
 
-The codebase carries the intellectual DNA of academic pioneers in compression, encryption, and cellular automata — the algorithms of Huffman, Shannon, Fano, Rivest–Shamir–Adleman, Daemen–Rijmen (AES), the National Bureau of Standards (DES), Burrows–Wheeler, Conway, von Neumann, Ulam, and the entire PiedPiper team at IIIT Hyderabad. Every classical result has been re-expressed as a Solana ZK primitive. Every trade is provable on-chain.
+The tree carries the intellectual DNA of academic pioneers in compression, encryption, and cellular automata — Huffman, Shannon, Fano, Rivest–Shamir–Adleman, Daemen–Rijmen (AES), the National Bureau of Standards (DES), Burrows–Wheeler, Conway, von Neumann, Ulam, and the PiedPiper team at IIIT Hyderabad. Each classical result is restated as a Solana zero-knowledge primitive. Each trade can be attested on-chain.
 
 ### Ecosystem Links
 
@@ -164,12 +195,14 @@ clawdbot solana trending
 ### npm (one command)
 
 ```bash
-npm i -g @clawd/clawdbot
+npm i -g @x402solana/clawdbot
 # or
-npx @clawd/clawdbot version
+npx @x402solana/clawdbot version
+npm i -g @x402solana/clawd-bot
+npm i @x402solana/zk-primitives
 ```
 
-`npx @clawd/clawdbot` is the same Go CLI the repo builds. Pack it from this repo with `make npm-pack` and install the tarball. Companion packages: `@clawd/clawd-bot` (same binary) and `@clawd/zk-primitives` (zero-knowledge primitive metadata). The unscoped npm name `clawdbot` is already published by another project (OpenClaw 2026.1.24) — this runtime does not overwrite it. The binary name stays `clawdbot`.
+`npx @x402solana/clawdbot` is the same Go CLI the repo builds. Pack it from this repo with `make npm-pack` and install the tarball. Companion packages: `@x402solana/clawd-bot` (same binary) and `@x402solana/zk-primitives` (zero-knowledge primitive metadata). The unscoped npm name `clawdbot` is already published by another project (OpenClaw 2026.1.24) — this runtime does not overwrite it. The binary name stays `clawdbot`.
 
 ### macOS app (Grok-like DMG)
 
@@ -412,7 +445,7 @@ The Clawd Bot is bound by the **Clawd Constitution** — the world's first Solan
 
 ### Privacy by Default
 
-Clawd is designed to be privacy-preserving by default. Sensitive user context, research state, wallet metadata, and model-adjacent artifacts should be minimized, committed, encrypted, or proven where possible rather than disclosed by habit. The project's zk surfaces exist to strengthen verifiability and user dignity, not to create blind spots for harmful behavior.
+The Clawd Bot is privacy-preserving by default. Sensitive user context, research state, wallet metadata, and model-adjacent artifacts should be minimized, committed, encrypted, or proven with zero-knowledge where possible rather than disclosed by habit. The zk primitives exist to strengthen verifiability and user dignity, not to create blind spots for harmful behavior.
 
 > *The shell molts. The laws do not.*
 

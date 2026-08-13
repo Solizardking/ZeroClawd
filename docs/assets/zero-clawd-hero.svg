@@ -70,7 +70,7 @@
     <g filter="url(#glow)">
       <text x="70" y="150" class="mono" font-size="20" fill="#00ff9d" opacity="0.9">$ clawdbot agent --sovereign --zk --ooda</text>
       <text x="68" y="240" font-family="ui-sans-serif, system-ui, sans-serif" font-size="78" font-weight="800" letter-spacing="2" fill="url(#word)">
-        THE CLAWD BOT
+        CLAWD BOT
         <animate attributeName="opacity" values="1;0.82;1;0.94;1" dur="2.6s" repeatCount="indefinite"/>
       </text>
       <text x="72" y="286" class="mono" font-size="22" fill="#a8ffe6">Sovereign Solana agent · zero-knowledge · zk primitives</text>

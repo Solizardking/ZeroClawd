@@ -61,7 +61,7 @@ cat << 'EOF'
     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝
 EOF
 echo -e "${RESET}"
-echo -e "${BOLD}  🦞 Sovereign Solana Trading Intelligence — Installer${RESET}"
+echo -e "${BOLD}  🦞 The Clawd Bot — Sovereign Solana Trading Intelligence${RESET}"
 echo -e "  Free AI via zkrouter · SolanaTracker RPC included"
 echo
 

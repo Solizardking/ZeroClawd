@@ -287,7 +287,7 @@ help:
 	@echo "  scan-i2c    Scan for Modulino sensors"
 	@echo "  dmg         Build Clawd Bot.app + studio DMG"
 	@echo "  app         Stage Clawd Bot.app without wrapping a DMG"
-	@echo "  npm-pack    Vendor the CLI and npm pack clawdbot"
+	@echo "  npm-pack    Vendor the CLI and npm pack @clawd/clawdbot @clawd/clawd-bot @clawd/zk-primitives"
 	@echo "  npm-publish Dry-run (and live if npm login exists)"
 	@echo "  clean       Remove build artifacts"
 	@echo ""
